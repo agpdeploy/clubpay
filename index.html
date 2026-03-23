@@ -25,7 +25,7 @@
   </div>
 
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
-    <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center">
+    <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-5xl mb-4 text-emerald-500 italic font-black">CP</div>
       <h1 class="text-2xl font-bold mb-6">ClubPay GameDay</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">Enter Dashboard</button>
@@ -71,10 +71,10 @@
                 <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Total Owed</div>
                 <div id="club-total-debt" class="text-xl font-black text-red-500">-$0.00</div>
             </div>
-            <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-center">
-                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Sync</div>
+            <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-center flex flex-col justify-center">
+                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Status</div>
                 <div class="text-xs font-black text-emerald-500 uppercase flex items-center justify-center gap-1">
-                    <i class="fa-solid fa-circle text-[6px]"></i> Online
+                    <i class="fa-solid fa-cloud"></i> Online
                 </div>
             </div>
         </div>
@@ -111,7 +111,7 @@
 
   <div id="player-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
-      <h3 class="text-xl font-bold mb-6">Create Master Profile</h3>
+      <h3 class="text-xl font-bold mb-6">New Master Profile</h3>
       <input id="player-first" placeholder="First Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4"/>
       <input id="player-last" placeholder="Last Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4"/>
       <div class="flex p-1 bg-zinc-800 rounded-xl mb-6">
@@ -125,20 +125,19 @@
     </div>
   </div>
 
-  <div id="history-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] backdrop-blur-md">
-    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[80vh]">
+  <div id="history-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[9999] backdrop-blur-md">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[85vh]">
       <div class="flex justify-between items-start mb-6">
         <div>
-            <h3 id="history-name" class="text-xl font-bold italic text-emerald-500">Player Name</h3>
-            <p id="history-balance" class="text-sm font-bold opacity-50 uppercase tracking-widest"></p>
+            <h3 id="history-name" class="text-xl font-bold italic text-emerald-500 tracking-tight">Player Name</h3>
+            <p id="history-balance" class="text-[10px] font-black uppercase text-zinc-500 tracking-widest mt-1"></p>
         </div>
-        <button onclick="hideModal('history-modal')" class="text-zinc-500 text-2xl"><i class="fa-solid fa-circle-xmark"></i></button>
+        <button onclick="hideModal('history-modal')" class="text-zinc-500 h-10 w-10 rounded-full bg-zinc-800 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
       
-      <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pr-2 no-scrollbar">
-          </div>
+      <div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
       
-      <button onclick="hideModal('history-modal')" class="mt-6 w-full py-4 bg-zinc-800 rounded-2xl font-bold text-xs uppercase tracking-widest">Close History</button>
+      <button onclick="hideModal('history-modal')" class="mt-6 w-full py-4 bg-zinc-800 rounded-2xl font-black text-[10px] uppercase tracking-widest text-zinc-400">Back to Ledger</button>
     </div>
   </div>
 
@@ -157,13 +156,13 @@
         try {
             const res = await fetch(DATABASE_URL + "?action=getData");
             const data = await res.json();
-            players = data.players;
-            transactions = data.transactions;
+            players = data.players || [];
+            transactions = data.transactions || [];
             document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
             renderAll();
         } catch (e) { 
             console.error(e);
-            alert("Connection Error. Check your Script URL and Deployment settings.");
+            alert("Connection Error. Data could not be retrieved from Google Sheets.");
         }
         toggleLoader(false);
     }
@@ -188,7 +187,10 @@
     function setActiveTeam(id) { activeTeamId = id; renderTeamPills(); }
 
     function getBalance(pid) {
-        return transactions.filter(t => t.playerId === pid).reduce((sum, t) => sum + t.amount, 0);
+        // Ensure all transaction amounts are treated as numbers
+        return transactions
+            .filter(t => t.playerId === pid)
+            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     }
 
     function showGamedaySuggestions() {
@@ -196,15 +198,17 @@
         const sug = document.getElementById('gameday-suggestions');
         if(!term) { sug.classList.add('hidden'); return; }
         const filtered = players.filter(p => !gamedaySquad.some(s => s.id === p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term));
-        sug.innerHTML = filtered.map(p => `
+        sug.innerHTML = filtered.map(p => {
+            let bal = Number(getBalance(p.id)) || 0;
+            return `
             <div onclick="addToGameday('${p.id}')" class="p-4 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center">
                 <div>
                     <div class="font-bold text-sm">${p.firstName} ${p.lastName}</div>
                     <div class="text-[9px] text-zinc-500 uppercase font-bold">${p.isMember ? 'Member' : 'Casual'}</div>
                 </div>
-                <div class="font-black ${getBalance(p.id) < 0 ? 'text-red-500' : 'text-emerald-500'}">$${getBalance(p.id).toFixed(2)}</div>
+                <div class="font-black ${bal < 0 ? 'text-red-500' : 'text-emerald-500'}">$${bal.toFixed(2)}</div>
             </div>
-        `).join('');
+        `}).join('');
         sug.classList.remove('hidden');
     }
 
@@ -220,9 +224,9 @@
         const list = document.getElementById('gameday-list');
         document.getElementById('finalize-area').classList.toggle('hidden', gamedaySquad.length === 0);
         list.innerHTML = gamedaySquad.map(p => {
-            const bal = getBalance(p.id);
+            let bal = Number(getBalance(p.id)) || 0;
             return `
-            <div class="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-4 flex flex-col gap-4 shadow-sm border-l-4 ${bal < 0 ? 'border-l-red-500' : 'border-l-emerald-500'}">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-4 flex flex-col gap-4 shadow-sm border-l-4 ${bal < 0 ? 'border-l-red-500' : 'border-l-emerald-500'}">
                 <div class="flex justify-between items-center">
                     <div>
                         <div class="font-bold">${p.firstName} ${p.lastName}</div>
@@ -234,14 +238,12 @@
                 </div>
                 <div class="flex gap-2 items-center bg-black/60 p-3 rounded-2xl border border-zinc-800">
                     <div class="flex-1">
-                        <label class="text-[8px] uppercase text-zinc-500 block font-black mb-1">Handed Over ($)</label>
-                        <input type="number" placeholder="0" oninput="gamedaySquad.find(x=>x.id==='${p.id}').paidToday = parseFloat(this.value)||0" class="w-full bg-transparent font-black text-2xl text-emerald-500 outline-none" />
+                        <label class="text-[8px] uppercase text-zinc-500 block font-black mb-1 tracking-tighter">Amount Paid ($)</label>
+                        <input type="number" placeholder="0" oninput="gamedaySquad.find(x=>x.id==='${p.id}').paidToday = parseFloat(this.value)||0" class="w-full bg-transparent font-black text-2xl text-emerald-500 outline-none px-1" />
                     </div>
-                    <div class="text-right">
-                        <button onclick="const x=gamedaySquad.find(y=>y.id==='${p.id}'); x.payMethod=x.payMethod==='Cash'?'Card':'Cash'; this.innerText=x.payMethod" class="text-[10px] bg-emerald-600/10 border border-emerald-600/30 text-emerald-500 px-4 py-2 rounded-xl font-black uppercase shadow-sm">
-                            ${p.payMethod}
-                        </button>
-                    </div>
+                    <button onclick="const x=gamedaySquad.find(y=>y.id==='${p.id}'); x.payMethod=x.payMethod==='Cash'?'Card':'Cash'; this.innerText=x.payMethod" class="text-[10px] bg-zinc-800 px-4 py-2 rounded-xl font-black uppercase text-zinc-400">
+                        ${p.payMethod}
+                    </button>
                 </div>
             </div>
         `}).join('');
@@ -254,8 +256,7 @@
             await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logMatch", teamId: activeTeamId, squad: gamedaySquad }) });
             gamedaySquad = [];
             await loadData();
-            alert("Match Day Sync Successful!");
-        } catch(e) { alert("Error saving match. Try again."); }
+        } catch(e) { alert("Error saving. Check internet connection."); }
         toggleLoader(false);
     }
 
@@ -269,18 +270,21 @@
             await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: f, lastName: l, isMember: selectedIsMember }) });
             hideModal('player-modal');
             await loadData();
-        } catch(e) { alert("Error saving player."); }
+        } catch(e) { alert("Error creating player."); }
         toggleLoader(false);
     }
 
     function updateClubDebt() {
-        const total = players.reduce((sum, p) => { const b = getBalance(p.id); return b < 0 ? sum + b : sum; }, 0);
+        const total = players.reduce((sum, p) => { 
+            let b = Number(getBalance(p.id)) || 0;
+            return b < 0 ? sum + b : sum; 
+        }, 0);
         document.getElementById('club-total-debt').textContent = `$${Math.abs(total).toFixed(2)}`;
     }
 
     function renderPlayersList() {
         document.getElementById('players-list').innerHTML = players.map(p => {
-            const bal = getBalance(p.id);
+            let bal = Number(getBalance(p.id)) || 0;
             return `
             <div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm active:bg-zinc-800 cursor-pointer">
                 <div>
@@ -296,29 +300,30 @@
 
     function showHistory(pid) {
         const p = players.find(x => x.id === pid);
-        const bal = getBalance(pid);
+        let currentBal = Number(getBalance(pid)) || 0;
         const history = transactions.filter(t => t.playerId === pid).reverse();
         
         document.getElementById('history-name').innerText = p.firstName + " " + p.lastName;
-        document.getElementById('history-balance').innerText = "Current Balance: $" + bal.toFixed(2);
+        document.getElementById('history-balance').innerText = "Running Balance: $" + currentBal.toFixed(2);
         
         const list = document.getElementById('history-list');
         if (history.length === 0) {
-            list.innerHTML = `<p class="text-zinc-600 text-center py-10 italic">No transaction history found.</p>`;
+            list.innerHTML = `<div class="text-zinc-600 text-center py-20 text-xs uppercase tracking-widest font-bold">No Records Yet</div>`;
         } else {
-            list.innerHTML = history.map(t => `
-                <div class="bg-zinc-800/50 p-4 rounded-2xl border border-zinc-700/50 flex justify-between items-center">
+            list.innerHTML = history.map(t => {
+                let amt = Number(t.amount) || 0;
+                return `
+                <div class="bg-zinc-800/40 p-4 rounded-2xl border border-zinc-800/50 flex justify-between items-center">
                     <div>
-                        <div class="text-[10px] font-black uppercase text-zinc-500 mb-1">${t.type.replace('_', ' ')}</div>
-                        <div class="text-xs font-bold">${t.note || 'No note'}</div>
+                        <div class="text-[8px] font-black uppercase text-zinc-500 mb-1 tracking-widest">${t.type.replace('_', ' ')}</div>
+                        <div class="text-xs font-bold">${t.note || 'Entry'}</div>
                     </div>
-                    <div class="text-sm font-black ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}">
-                        ${t.amount < 0 ? '-' : '+'}$${Math.abs(t.amount).toFixed(2)}
+                    <div class="text-sm font-black ${amt < 0 ? 'text-red-400' : 'text-emerald-400'}">
+                        ${amt < 0 ? '-' : '+'}$${Math.abs(amt).toFixed(2)}
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
-        
         document.getElementById('history-modal').classList.remove('hidden');
     }
 
@@ -341,7 +346,6 @@
     function showAddPlayerModal() { document.getElementById('player-modal').classList.remove('hidden'); }
     function setPlayerType(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; }
     function switchScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.querySelector(`button[onclick="switchScreen('${id}')"]`).classList.add('active'); }
-
   </script>
 </body>
 </html>
