@@ -14,6 +14,7 @@
     .nav-item.active { color: #22c55e !important; border-top: 3px solid #22c55e; }
     .loading-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
     input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
   </style>
 </head>
 <body>
@@ -70,10 +71,10 @@
                 <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Total Owed</div>
                 <div id="club-total-debt" class="text-xl font-black text-red-500">-$0.00</div>
             </div>
-            <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
-                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Sync Status</div>
-                <div class="text-xs font-black text-emerald-500 uppercase tracking-tighter flex items-center gap-1">
-                    <i class="fa-solid fa-cloud"></i> Online
+            <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-center">
+                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Sync</div>
+                <div class="text-xs font-black text-emerald-500 uppercase flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-circle text-[6px]"></i> Online
                 </div>
             </div>
         </div>
@@ -124,8 +125,24 @@
     </div>
   </div>
 
+  <div id="history-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] backdrop-blur-md">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[80vh]">
+      <div class="flex justify-between items-start mb-6">
+        <div>
+            <h3 id="history-name" class="text-xl font-bold italic text-emerald-500">Player Name</h3>
+            <p id="history-balance" class="text-sm font-bold opacity-50 uppercase tracking-widest"></p>
+        </div>
+        <button onclick="hideModal('history-modal')" class="text-zinc-500 text-2xl"><i class="fa-solid fa-circle-xmark"></i></button>
+      </div>
+      
+      <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pr-2 no-scrollbar">
+          </div>
+      
+      <button onclick="hideModal('history-modal')" class="mt-6 w-full py-4 bg-zinc-800 rounded-2xl font-bold text-xs uppercase tracking-widest">Close History</button>
+    </div>
+  </div>
+
   <script>
-    // --- CONNECTED SCRIPT URL ---
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzBp716p5vketEu9VIYlVdX8D9Vapxrxo3Sd-ywwgdGM8hLNOAcup5A7EqcXVAVMmGc/exec";
 
     let players = [];
@@ -146,7 +163,7 @@
             renderAll();
         } catch (e) { 
             console.error(e);
-            alert("Connection Error. Ensure the Google Script is deployed as a Web App with access for 'Anyone'.");
+            alert("Connection Error. Check your Script URL and Deployment settings.");
         }
         toggleLoader(false);
     }
@@ -265,7 +282,7 @@
         document.getElementById('players-list').innerHTML = players.map(p => {
             const bal = getBalance(p.id);
             return `
-            <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+            <div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm active:bg-zinc-800 cursor-pointer">
                 <div>
                     <div class="font-bold">${p.firstName} ${p.lastName}</div>
                     <div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Club Member' : 'Casual Player'}</div>
@@ -275,6 +292,34 @@
                 </div>
             </div>
         `}).join('');
+    }
+
+    function showHistory(pid) {
+        const p = players.find(x => x.id === pid);
+        const bal = getBalance(pid);
+        const history = transactions.filter(t => t.playerId === pid).reverse();
+        
+        document.getElementById('history-name').innerText = p.firstName + " " + p.lastName;
+        document.getElementById('history-balance').innerText = "Current Balance: $" + bal.toFixed(2);
+        
+        const list = document.getElementById('history-list');
+        if (history.length === 0) {
+            list.innerHTML = `<p class="text-zinc-600 text-center py-10 italic">No transaction history found.</p>`;
+        } else {
+            list.innerHTML = history.map(t => `
+                <div class="bg-zinc-800/50 p-4 rounded-2xl border border-zinc-700/50 flex justify-between items-center">
+                    <div>
+                        <div class="text-[10px] font-black uppercase text-zinc-500 mb-1">${t.type.replace('_', ' ')}</div>
+                        <div class="text-xs font-bold">${t.note || 'No note'}</div>
+                    </div>
+                    <div class="text-sm font-black ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}">
+                        ${t.amount < 0 ? '-' : '+'}$${Math.abs(t.amount).toFixed(2)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        document.getElementById('history-modal').classList.remove('hidden');
     }
 
     function addTeam() {
@@ -297,7 +342,6 @@
     function setPlayerType(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; }
     function switchScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.querySelector(`button[onclick="switchScreen('${id}')"]`).classList.add('active'); }
 
-    window.onload = () => { /* Initial sync is triggered by Login button */ };
   </script>
 </body>
 </html>
