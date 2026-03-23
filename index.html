@@ -14,7 +14,6 @@
     .nav-item.active { color: #22c55e !important; border-top: 3px solid #22c55e; }
     .loading-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center; flex-direction: column; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -26,15 +25,17 @@
 
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
-      <div class="text-5xl mb-4 text-emerald-500 italic font-black text-6xl">CP</div>
+      <div class="text-5xl mb-4 text-emerald-500 italic font-black text-6xl tracking-tighter">CP</div>
       <h1 class="text-2xl font-bold mb-6">ClubPay GameDay</h1>
-      <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform uppercase tracking-widest">Enter Dashboard</button>
-      <p class="mt-4 text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Ferny Districts CC</p>
+      <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest">Enter Dashboard</button>
+      <div class="mt-6 flex flex-col gap-1">
+          <p class="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Ferny Districts CC</p>
+          <p class="text-[8px] text-zinc-700 font-mono">Build v2.3 - Cloud Connected</p>
+      </div>
     </div>
   </div>
 
   <div id="app" class="hidden flex flex-col min-h-screen mx-auto max-w-[480px]">
-    
     <header class="sticky top-0 p-4 border-b border-zinc-800 flex justify-between items-center bg-black/80 backdrop-blur-md z-40">
       <div>
         <h1 class="text-xl font-black italic text-emerald-500 tracking-tighter uppercase">ClubPay</h1>
@@ -52,11 +53,11 @@
         
         <div class="flex gap-2 mb-6">
             <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/50"></i>
-                <input id="gameday-search" type="text" placeholder="Search player..." oninput="showGamedaySuggestions()" class="w-full bg-zinc-900 border-2 border-emerald-900/20 rounded-2xl pl-12 pr-4 py-4 text-lg outline-none focus:border-emerald-500 transition-all"/>
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/40"></i>
+                <input id="gameday-search" type="text" placeholder="Find player..." oninput="showGamedaySuggestions()" class="w-full bg-zinc-900 border-2 border-emerald-900/10 rounded-2xl pl-10 pr-4 py-4 text-lg outline-none focus:border-emerald-500 transition-all"/>
                 <div id="gameday-suggestions" class="hidden absolute z-50 left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700 rounded-2xl max-h-60 overflow-auto shadow-2xl"></div>
             </div>
-            <button onclick="showAddPlayerModal('gameday')" class="bg-zinc-900 border-2 border-emerald-900/40 w-16 rounded-2xl text-emerald-500 flex items-center justify-center active:bg-emerald-600 active:text-white transition-all shadow-lg">
+            <button onclick="showAddPlayerModal('gameday')" class="bg-zinc-900 border-2 border-emerald-900/20 w-16 rounded-2xl text-emerald-500 flex items-center justify-center active:bg-emerald-600 active:text-white transition-all shadow-lg">
                 <i class="fa-solid fa-user-plus text-xl"></i>
             </button>
         </div>
@@ -64,45 +65,39 @@
         <div id="gameday-list" class="space-y-3"></div>
 
         <div id="finalize-area" class="hidden mt-8 pt-6 border-t border-zinc-800">
-            <button onclick="confirmGameday()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-widest">Confirm & Save Fees</button>
+            <button onclick="confirmGameday()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-widest">Confirm & Save Match</button>
         </div>
       </div>
 
       <div id="players" class="screen mt-4">
         <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl mb-4 flex justify-between items-center shadow-md">
             <div>
-                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Total Owed to Club</div>
+                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1">Total Club Debt</div>
                 <div id="club-total-debt" class="text-2xl font-black text-red-500">-$0.00</div>
             </div>
             <div class="text-right">
-                <div class="text-[9px] font-bold text-zinc-500 uppercase mb-1 tracking-widest">Cloud Status</div>
-                <div class="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1 justify-end">
-                    <i class="fa-solid fa-circle text-[6px] animate-pulse"></i> Connected
-                </div>
+                <div class="text-[10px] font-black text-emerald-500 uppercase flex items-center gap-1 justify-end"><i class="fa-solid fa-cloud animate-pulse"></i> Sync</div>
             </div>
         </div>
         <div class="relative mb-4">
-            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600"></i>
-            <input id="ledger-search" type="text" placeholder="Quick find on ledger..." oninput="renderPlayersList()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:border-emerald-500"/>
+            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-zinc-700"></i>
+            <input id="ledger-search" type="text" placeholder="Search master list..." oninput="renderPlayersList()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 outline-none focus:border-emerald-500"/>
         </div>
         <div id="players-list" class="space-y-2"></div>
       </div>
 
       <div id="teams" class="screen mt-4">
         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-6 shadow-lg">
-            <h2 class="font-bold mb-4 flex items-center gap-2 uppercase text-xs tracking-widest text-zinc-400">Add Club Team</h2>
+            <h2 class="font-bold mb-4 uppercase text-[10px] tracking-widest text-zinc-500">Add Club Team</h2>
             <div class="flex gap-2">
-                <input id="new-team" placeholder="e.g. 1st XI" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none"/>
-                <button onclick="addTeam()" class="bg-emerald-600 px-6 rounded-xl font-bold uppercase text-xs">Add</button>
+                <input id="new-team" placeholder="Team name" class="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none"/>
+                <button onclick="addTeam()" class="bg-emerald-600 px-6 rounded-xl font-bold uppercase text-[10px]">Add</button>
             </div>
         </div>
-        
         <div id="teams-list" class="space-y-2 mb-8"></div>
-        
         <div class="pt-6 border-t border-zinc-800">
-            <h2 class="font-bold mb-4 uppercase text-[10px] tracking-widest text-zinc-500">Database Management</h2>
-            <button onclick="showAddPlayerModal('setup')" class="w-full bg-zinc-900 py-4 rounded-xl font-bold text-emerald-500 border border-emerald-900/30 shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
-                <i class="fa-solid fa-address-card"></i> Create New Master Player
+            <button onclick="showAddPlayerModal('setup')" class="w-full bg-zinc-900 py-4 rounded-xl font-bold text-emerald-500 border border-emerald-900/20 shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <i class="fa-solid fa-address-card"></i> Create Master Profile
             </button>
         </div>
       </div>
@@ -125,30 +120,25 @@
 
   <div id="player-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
-      <h3 class="text-xl font-bold mb-6 italic text-emerald-500">New Player Profile</h3>
+      <h3 class="text-xl font-bold mb-6 italic text-emerald-500">New Player</h3>
       <div class="space-y-4">
         <input id="player-first" placeholder="First Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
         <input id="player-last" placeholder="Last Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
-        
         <div>
-            <label class="text-[9px] uppercase font-bold text-zinc-500 ml-1 mb-1 block">Default Team</label>
-            <select id="player-default-team" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none text-sm">
-                <option value="">No Default Team</option>
-            </select>
+            <label class="text-[9px] uppercase font-bold text-zinc-500 mb-1 block">Default Team</label>
+            <select id="player-default-team" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none text-sm"></select>
         </div>
-
         <div>
-            <label class="text-[9px] uppercase font-bold text-zinc-500 ml-1 mb-1 block">Player Status</label>
+            <label class="text-[9px] uppercase font-bold text-zinc-500 mb-1 block">Type</label>
             <div class="flex p-1 bg-zinc-800 rounded-xl">
                 <button id="btn-member" onclick="setPlayerType(true)" class="flex-1 py-3 rounded-lg text-xs font-bold bg-emerald-600 text-white transition-all">Member ($10)</button>
                 <button id="btn-casual" onclick="setPlayerType(false)" class="flex-1 py-3 rounded-lg text-xs font-bold text-zinc-500 transition-all">Casual ($25)</button>
             </div>
         </div>
       </div>
-
       <div class="flex gap-3 mt-8">
-        <button onclick="hideModal('player-modal')" class="flex-1 py-4 text-zinc-500 font-bold text-sm">Cancel</button>
-        <button onclick="savePlayer()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-900/20 active:scale-95 transition-transform text-sm">Save to Cloud</button>
+        <button onclick="hideModal('player-modal')" class="flex-1 py-4 text-zinc-500 font-bold">Cancel</button>
+        <button onclick="savePlayer()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold shadow-lg">Save Cloud</button>
       </div>
     </div>
   </div>
@@ -157,18 +147,17 @@
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[85vh] shadow-2xl">
       <div class="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
         <div>
-            <h3 id="history-name" class="text-xl font-bold italic text-emerald-500 uppercase tracking-tighter">Player Name</h3>
+            <h3 id="history-name" class="text-xl font-bold italic text-emerald-500 uppercase tracking-tighter"></h3>
             <p id="history-balance" class="text-[10px] font-black uppercase text-zinc-500 tracking-widest mt-1"></p>
         </div>
         <button onclick="hideModal('history-modal')" class="text-zinc-500 h-10 w-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-zinc-700 transition-colors"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
-      <button onclick="hideModal('history-modal')" class="mt-6 w-full py-4 bg-zinc-800 rounded-2xl font-black text-[10px] uppercase tracking-widest text-zinc-400">Back to Ledger</button>
+      <button onclick="hideModal('history-modal')" class="mt-6 w-full py-4 bg-zinc-800 rounded-2xl font-black text-[10px] uppercase tracking-widest text-zinc-400">Back</button>
     </div>
   </div>
 
   <script>
-    // --- CONNECTED SCRIPT URL ---
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzBp716p5vketEu9VIYlVdX8D9Vapxrxo3Sd-ywwgdGM8hLNOAcup5A7EqcXVAVMmGc/exec";
 
     let players = [];
@@ -177,7 +166,7 @@
     let gamedaySquad = [];
     let activeTeamId = teams.length > 0 ? teams[0].id : null;
     let selectedIsMember = true;
-    let modalSource = 'setup'; // Track if modal was opened from gameday or setup
+    let modalSource = 'setup';
 
     async function loadData() {
         toggleLoader(true);
@@ -188,10 +177,7 @@
             transactions = data.transactions || [];
             document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
             renderAll();
-        } catch (e) { 
-            console.error(e);
-            alert("Cloud Sync Failed. Verify connection.");
-        }
+        } catch (e) { console.error(e); alert("Sync Error."); }
         toggleLoader(false);
     }
 
@@ -264,7 +250,7 @@
                 </div>
                 <div class="flex gap-2 items-center bg-black/60 p-3 rounded-2xl border border-zinc-800">
                     <div class="flex-1">
-                        <label class="text-[8px] uppercase text-zinc-500 block font-black mb-1">Handed Over ($)</label>
+                        <label class="text-[8px] uppercase text-zinc-500 block font-black mb-1">Received ($)</label>
                         <input type="number" placeholder="0" oninput="gamedaySquad.find(x=>x.id==='${p.id}').paidToday = parseFloat(this.value)||0" class="w-full bg-transparent font-black text-2xl text-emerald-500 outline-none px-1" />
                     </div>
                     <button onclick="const x=gamedaySquad.find(y=>y.id==='${p.id}'); x.payMethod=x.payMethod==='Cash'?'Card':'Cash'; this.innerText=x.payMethod" class="text-[10px] bg-zinc-800 border border-zinc-700 px-5 py-2 rounded-xl font-black uppercase text-zinc-400">
@@ -276,44 +262,34 @@
     }
 
     async function confirmGameday() {
-        if(!activeTeamId) return alert('No team selected');
+        if(!activeTeamId) return alert('Select Team');
         toggleLoader(true);
         try {
             await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logMatch", teamId: activeTeamId, squad: gamedaySquad }) });
-            gamedaySquad = [];
-            await loadData();
-            alert("Match Synced Successfully!");
-        } catch(e) { alert("Error saving match."); }
+            gamedaySquad = []; await loadData();
+            alert("Match Synced!");
+        } catch(e) { alert("Save Failed."); }
         toggleLoader(false);
     }
 
     async function savePlayer() {
         const f = document.getElementById('player-first').value.trim();
         const l = document.getElementById('player-last').value.trim();
-        const defTeam = document.getElementById('player-default-team').value;
-        if(!f || !l) return alert("Enter First and Last Name");
+        if(!f || !l) return alert("Missing Info");
         
         const pid = 'p' + Date.now();
-        const newPlayerData = { action: "savePlayer", id: pid, firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: defTeam };
-        
         toggleLoader(true);
         try {
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(newPlayerData) });
-            hideModal('player-modal');
-            await loadData(); // Refresh Master List
-            
-            // If we added them from Gameday screen, add them to the squad immediately
-            if(modalSource === 'gameday') {
-                addToGameday(pid);
-            }
-        } catch(e) { alert("Error saving player."); }
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: f, lastName: l, isMember: selectedIsMember }) });
+            hideModal('player-modal'); await loadData();
+            if(modalSource === 'gameday') addToGameday(pid);
+        } catch(e) { alert("Cloud Save Error."); }
         toggleLoader(false);
     }
 
     function updateClubDebt() {
         const total = players.reduce((sum, p) => { 
-            const b = getSafeBalance(p.id); 
-            return b < 0 ? sum + b : sum; 
+            const b = getSafeBalance(p.id); return b < 0 ? sum + b : sum; 
         }, 0);
         document.getElementById('club-total-debt').textContent = `$${Math.abs(total).toFixed(2)}`;
     }
@@ -322,18 +298,12 @@
         const term = document.getElementById('ledger-search')?.value.toLowerCase() || '';
         const list = document.getElementById('players-list');
         const filtered = players.filter(p => `${p.firstName} ${p.lastName}`.toLowerCase().includes(term));
-        
         list.innerHTML = filtered.map(p => {
             const bal = getSafeBalance(p.id);
             return `
-            <div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm active:bg-zinc-800 cursor-pointer transition-colors">
-                <div>
-                    <div class="font-bold text-zinc-100">${p.firstName} ${p.lastName}</div>
-                    <div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Club Member' : 'Casual Player'}</div>
-                </div>
-                <div class="text-xl font-black italic ${bal < 0 ? 'text-red-500' : 'text-emerald-500'}">
-                    $${bal.toFixed(2)}
-                </div>
+            <div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm active:bg-zinc-800 cursor-pointer">
+                <div><div class="font-bold text-zinc-100">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Club Member' : 'Casual Player'}</div></div>
+                <div class="text-xl font-black italic ${bal < 0 ? 'text-red-500' : 'text-emerald-500'}">$${bal.toFixed(2)}</div>
             </div>
         `}).join('');
     }
@@ -345,14 +315,15 @@
         document.getElementById('history-name').innerText = p.firstName + " " + p.lastName;
         document.getElementById('history-balance').innerText = "Running Balance: $" + bal.toFixed(2);
         const list = document.getElementById('history-list');
-        list.innerHTML = history.length === 0 ? `<div class="py-20 text-center opacity-30 text-xs font-bold uppercase tracking-widest italic">No Records Found</div>` : 
-            history.map(t => `<div class="bg-zinc-800/40 p-4 rounded-2xl border border-zinc-800/50 flex justify-between items-center shadow-inner"><div><div class="text-[8px] font-black uppercase text-zinc-500 mb-1 tracking-widest">${t.type.replace('_', ' ')}</div><div class="text-xs font-bold">${t.note || 'Entry'}</div></div><div class="text-sm font-black ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}">${t.amount < 0 ? '-' : '+'}$${Math.abs(t.amount).toFixed(2)}</div></div>`).join('');
+        list.innerHTML = history.length === 0 ? `<div class="py-20 text-center opacity-30 text-xs font-bold uppercase tracking-widest italic">No History</div>` : 
+            history.map(t => `<div class="bg-zinc-800/40 p-4 rounded-2xl border border-zinc-800/50 flex justify-between items-center"><div><div class="text-[8px] font-black uppercase text-zinc-500 mb-1 tracking-widest">${t.type.replace('_', ' ')}</div><div class="text-xs font-bold">${t.note || 'Entry'}</div></div><div class="text-sm font-black ${t.amount < 0 ? 'text-red-400' : 'text-emerald-400'}">${t.amount < 0 ? '-' : '+'}$${Math.abs(t.amount).toFixed(2)}</div></div>`).join('');
         document.getElementById('history-modal').classList.remove('hidden');
     }
 
     function populateDefaultTeamDropdown() {
         const sel = document.getElementById('player-default-team');
-        sel.innerHTML = '<option value="">No Default Team</option>' + teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        if(!sel) return;
+        sel.innerHTML = '<option value="">No Team</option>' + teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     }
 
     function addTeam() {
@@ -360,24 +331,18 @@
         if(!n) return;
         teams.push({id: 't'+Date.now(), name: n});
         localStorage.setItem('clubpay_teams', JSON.stringify(teams));
-        document.getElementById('new-team').value = '';
-        renderAll();
+        document.getElementById('new-team').value = ''; renderAll();
     }
 
     function renderTeams() {
-        document.getElementById('teams-list').innerHTML = teams.map(t => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center shadow-sm"><span>${t.name}</span><button onclick="teams=teams.filter(x=>x.id!=='${t.id}'); localStorage.setItem('clubpay_teams', JSON.stringify(teams)); renderAll();" class="text-zinc-600 p-2"><i class="fa-solid fa-trash-can"></i></button></div>`).join('');
+        document.getElementById('teams-list').innerHTML = teams.map(t => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center"><span>${t.name}</span><button onclick="teams=teams.filter(x=>x.id!=='${t.id}'); localStorage.setItem('clubpay_teams', JSON.stringify(teams)); renderAll();" class="text-zinc-600 p-2"><i class="fa-solid fa-trash-can"></i></button></div>`).join('');
     }
 
     function tryLogin() { document.getElementById('login').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); loadData(); }
     function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
     function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
-    function showAddPlayerModal(source) { 
-        modalSource = source; 
-        document.getElementById('player-first').value = '';
-        document.getElementById('player-last').value = '';
-        document.getElementById('player-modal').classList.remove('hidden'); 
-    }
-    function setPlayerType(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold transition-all' : 'flex-1 py-3 rounded-lg text-zinc-500 transition-all'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold transition-all' : 'flex-1 py-3 rounded-lg text-zinc-500 transition-all'; }
+    function showAddPlayerModal(source) { modalSource = source; document.getElementById('player-modal').classList.remove('hidden'); }
+    function setPlayerType(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold' : 'flex-1 py-3 rounded-lg text-zinc-500'; }
     function switchScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.querySelector(`button[onclick="switchScreen('${id}')"]`).classList.add('active'); }
   </script>
 </body>
