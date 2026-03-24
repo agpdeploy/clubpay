@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v0.52</title>
+  <title>🏏 ClubPay v0.55</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -26,8 +26,8 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 0.52</h1>
-      <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest">Open Dashboard</button>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 0.55</h1>
+      <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Open Dashboard</button>
     </div>
   </div>
 
@@ -57,7 +57,7 @@
         <div id="squad-suggestions-area" class="hidden mb-6"><div id="squad-chips" class="flex flex-wrap gap-2"></div></div>
         <div id="gameday-list" class="space-y-3"></div>
         <div id="finalize-area" class="hidden mt-8 pt-6 border-t border-zinc-800">
-            <button onclick="confirmGameday()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-widest italic">Confirm & Sync</button>
+            <button onclick="confirmGameday()" class="w-full bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-transform uppercase tracking-widest italic text-sm">Confirm & Sync Match</button>
         </div>
       </div>
 
@@ -80,9 +80,10 @@
         <div id="players-list" class="space-y-2"></div>
       </div>
 
-      <div id="teams" class="screen mt-4 pb-10">
-        <div class="bg-zinc-900 border border-zinc-800 p-5 mb-6 rounded-3xl shadow-lg text-center font-bold text-zinc-500 uppercase text-[10px]">
-            Fixture & Team Management via Sheets
+      <div id="teams" class="screen mt-4 pb-10 text-center">
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-3xl shadow-lg border-dashed border-2">
+            <p class="text-xs font-bold text-zinc-500 uppercase tracking-widest">Setup Mode</p>
+            <p class="text-[10px] text-zinc-600 mt-2">Team List is currently built from Fixtures sheet data.</p>
         </div>
       </div>
     </main>
@@ -99,11 +100,9 @@
   <script>
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzBp716p5vketEu9VIYlVdX8D9Vapxrxo3Sd-ywwgdGM8hLNOAcup5A7EqcXVAVMmGc/exec";
     
-    // --- GLOBAL STATE ---
     let players = [], transactions = [], fixtures = [], teams = [];
     let gamedaySquad = [], activeTeamId = null, ledgerFilter = 'all', currentMatch = null;
 
-    // --- CORE NAVIGATION (Fixed tryLogin) ---
     function tryLogin() {
         document.getElementById('login').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
@@ -121,21 +120,29 @@
         localStorage.setItem('clubpay_screen', id);
     }
 
-    // --- DATA HANDLING ---
     async function loadData() {
         toggleLoader(true);
         try {
             const res = await fetch(DATABASE_URL + "?action=getData");
             const data = await res.json();
+            
+            if (data.error) { alert("Cloud Error: " + data.error); return; }
+
             players = data.players || [];
             transactions = data.transactions || [];
             fixtures = data.fixtures || [];
-            teams = data.teams || [{id:'t1', name:'Default Team'}];
             
-            if(!activeTeamId) activeTeamId = teams[0].id;
+            // EMERGENCY TEAM LOGIC: If Teams sheet is empty, build from Fixtures/Players
+            teams = data.teams || [];
+            if (teams.length === 0) {
+                const uniqueIds = [...new Set([...fixtures.map(f => f.teamId), ...players.map(p => p.defaultTeam)])].filter(Boolean);
+                teams = uniqueIds.map((id, index) => ({ id: String(id), name: "XI " + (index + 1) }));
+            }
+            
+            if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id;
             document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
             renderAll();
-        } catch (e) { alert("Cloud Sync Failed."); }
+        } catch (e) { alert("Network Error. Check Script URL."); }
         toggleLoader(false);
     }
 
@@ -161,8 +168,8 @@
         list.innerHTML = filtered.map(p => {
             const bal = getSafeBalance(p.id);
             return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center mb-1">
-                <div><div class="font-bold text-zinc-100">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Member' : 'Casual'}</div></div>
-                <div class="text-xl font-black italic ${bal < 0 ? 'text-red-500' : 'text-emerald-500'}">$${bal.toFixed(2)}</div>
+                <div><div class="font-bold text-zinc-100 text-sm">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Member' : 'Casual'}</div></div>
+                <div class="text-lg font-black italic ${bal < 0 ? 'text-red-500' : 'text-emerald-500'}">$${bal.toFixed(2)}</div>
             </div>`;
         }).join('');
     }
@@ -173,20 +180,13 @@
         list.innerHTML = gamedaySquad.map(p => {
             const bal = getSafeBalance(p.id);
             const fee = p.isMember ? 10 : 25;
-            const net = bal - fee; // What they will owe AFTER this game
-            
-            let statusHtml = '';
-            if (bal >= fee) {
-                statusHtml = `<span class="text-emerald-500 font-bold tracking-tight uppercase text-[9px]">Fully Paid (Credit: $${bal.toFixed(2)})</span>`;
-            } else if (bal > 0) {
-                statusHtml = `<span class="text-orange-500 font-bold uppercase text-[9px]">Partially Paid (Owes $${Math.abs(net).toFixed(2)})</span>`;
-            } else {
-                statusHtml = `<span class="text-red-500 font-black italic uppercase text-[9px]">Owes $${Math.abs(net).toFixed(2)}</span>`;
-            }
+            const net = bal - fee;
+            let statusHtml = bal >= fee ? `<span class="text-emerald-500 font-bold text-[9px] uppercase">Paid ($${bal.toFixed(2)} credit)</span>` 
+                             : `<span class="text-red-500 font-black italic text-[9px] uppercase">Owes $${Math.abs(net).toFixed(2)}</span>`;
 
             return `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-4 flex flex-col gap-4 shadow-xl border-l-4 ${bal >= fee ? 'border-l-emerald-500' : 'border-l-red-500'}">
-                <div class="flex justify-between items-center"><div><div class="font-bold text-zinc-100">${p.firstName} ${p.lastName}</div><div class="mt-1">${statusHtml}</div></div><button onclick="gamedaySquad = gamedaySquad.filter(x=>x.id!=='${p.id}'); renderAll();" class="text-zinc-700 h-10 w-10 rounded-full bg-zinc-800 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button></div>
-                <div class="bg-black/40 p-3 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3 shadow-inner"><div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block font-black mb-1 italic">Paid Today ($)</label><input type="number" placeholder="0" oninput="gamedaySquad.find(x=>x.id==='${p.id}').paidToday = parseFloat(this.value)||0" class="w-full bg-transparent font-black text-2xl text-emerald-500 outline-none px-1" /></div><button onclick="const x=gamedaySquad.find(y=>y.id==='${p.id}'); x.payMethod=x.payMethod==='Cash'?'Card':'Cash'; renderGameday();" class="text-[10px] bg-zinc-800 border border-zinc-700 px-5 py-2 rounded-xl font-black uppercase text-zinc-400">${p.payMethod}</button></div>
+                <div class="flex justify-between items-center"><div><div class="font-bold text-zinc-100 text-sm">${p.firstName} ${p.lastName}</div><div class="mt-1">${statusHtml}</div></div><button onclick="gamedaySquad = gamedaySquad.filter(x=>x.id!=='${p.id}'); renderAll();" class="text-zinc-700 h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="bg-black/40 p-3 rounded-2xl border border-zinc-800 flex items-center justify-between gap-3 shadow-inner"><div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block font-black mb-1 italic">Paid Today ($)</label><input type="number" placeholder="0" oninput="gamedaySquad.find(x=>x.id==='${p.id}').paidToday = parseFloat(this.value)||0" class="w-full bg-transparent font-black text-2xl text-emerald-500 outline-none px-1" /></div><button onclick="const x=gamedaySquad.find(y=>y.id==='${p.id}'); x.payMethod=x.payMethod==='Cash'?'Card':'Cash'; renderGameday();" class="text-[10px] bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-xl font-black uppercase text-zinc-400">${p.payMethod}</button></div>
             </div>`}).join('');
     }
 
@@ -194,18 +194,12 @@
         if(!activeTeamId) return alert('Select Team');
         toggleLoader(true);
         try {
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ 
-                action: "logMatch", 
-                teamId: activeTeamId, 
-                squad: gamedaySquad, 
-                opponent: currentMatch ? currentMatch.opponent : "Match Day" 
-            }) });
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logMatch", teamId: activeTeamId, squad: gamedaySquad, opponent: currentMatch ? currentMatch.opponent : "Match" }) });
             gamedaySquad = []; await loadData(); alert("Sync Success!");
         } catch(e) { alert("Save Error."); }
         toggleLoader(false);
     }
 
-    // --- HELPER FUNCTIONS ---
     function setLedgerFilter(val) { ledgerFilter = val; renderPlayersList(); }
     function updateClubDebt() {
         const debt = players.reduce((sum, p) => { const b = getSafeBalance(p.id); return b < 0 ? sum + b : sum; }, 0);
@@ -214,10 +208,10 @@
         document.getElementById('club-total-credit').textContent = `$${credit.toFixed(2)}`;
     }
     function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    function renderTeamPills() { const container = document.getElementById('team-pills'); container.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-6 py-2 rounded-full whitespace-nowrap text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }
+    function renderTeamPills() { const container = document.getElementById('team-pills'); container.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full whitespace-nowrap text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }
     function renderSquadChips() { const area = document.getElementById('squad-suggestions-area'); const chipContainer = document.getElementById('squad-chips'); const squadPlayers = players.filter(p => p.defaultTeam === activeTeamId && !gamedaySquad.some(s => s.id === p.id)); if (squadPlayers.length === 0) { area.classList.add('hidden'); return; } area.classList.remove('hidden'); chipContainer.innerHTML = squadPlayers.map(p => `<button onclick="addToGameday('${p.id}')" class="bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-xl text-[10px] font-black uppercase text-zinc-500 active:bg-emerald-600 transition-colors shadow-sm">+ ${p.firstName}</button>`).join(''); }
     function addToGameday(id) { const p = players.find(x => x.id === id); if(!p) return; gamedaySquad.push({...p, paidToday: 0, payMethod: 'Cash'}); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); renderAll(); }
-    function showGamedaySuggestions() { const term = document.getElementById('gameday-search').value.toLowerCase(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !gamedaySquad.some(s => s.id === p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term)); sug.innerHTML = filtered.map(p => `<div onclick="addToGameday('${p.id}')" class="p-4 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center transition-colors"><div><div class="font-bold text-sm text-zinc-200">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black tracking-widest">${p.isMember ? 'Member' : 'Casual'}</div></div><div class="font-black ${getSafeBalance(p.id) < 0 ? 'text-red-500' : 'text-emerald-500'} italic text-sm">$${getSafeBalance(p.id).toFixed(2)}</div></div>`).join(''); sug.classList.remove('hidden'); }
+    function showGamedaySuggestions() { const term = document.getElementById('gameday-search').value.toLowerCase(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !gamedaySquad.some(s => s.id === p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term)); sug.innerHTML = filtered.map(p => `<div onclick="addToGameday('${p.id}')" class="p-4 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center transition-colors"><div><div class="font-bold text-sm text-zinc-200">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black">${p.isMember ? 'Member' : 'Casual'}</div></div><div class="font-black ${getSafeBalance(p.id) < 0 ? 'text-red-500' : 'text-emerald-500'} italic text-sm">$${getSafeBalance(p.id).toFixed(2)}</div></div>`).join(''); sug.classList.remove('hidden'); }
     function findCurrentMatch() { const card = document.getElementById('fixture-card'); if(!activeTeamId || fixtures.length === 0) { card.classList.add('hidden'); currentMatch = null; return; } const teamFix = fixtures.filter(f => f.teamId === activeTeamId).sort((a,b) => new Date(a.date) - new Date(b.date)); currentMatch = teamFix.find(f => new Date(f.date) >= new Date(new Date().setHours(0,0,0,0))); if(currentMatch) { document.getElementById('match-vs').innerText = "vs " + currentMatch.opponent; document.getElementById('match-details').innerText = new Date(currentMatch.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); card.classList.remove('hidden'); } else { card.classList.add('hidden'); } }
 
   </script>
