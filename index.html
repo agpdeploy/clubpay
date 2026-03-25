@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.57</title>
+  <title>🏏 ClubPay v1.58</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -19,37 +19,22 @@
     .audit-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 8px; align-items: center; }
     .toggle-active { background: #059669 !important; color: white !important; }
     .save-indicator { position: fixed; bottom: 80px; right: 20px; background: #059669; color: white; padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; display: none; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
-    .team-group-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #52525b; margin-top: 24px; margin-bottom: 8px; padding-left: 4px; border-left: 3px solid #22c55e; }
+    .team-group-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #52525b; margin-top: 24px; margin-bottom: 8px; padding-left: 4px; border-left: 3px solid #22c55e; display: flex; justify-content: space-between; align-items: center; }
   </style>
-
-  <script>
-    function tryLogin() {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        if (window.loadData) window.loadData();
-    }
-    function switchScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const t = document.getElementById(id); if(t) t.classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active');
-    }
-    function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
-  </script>
 </head>
 <body>
 
   <div id="loader" class="loading-overlay">
     <div class="animate-spin text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-sync"></i></div>
-    <div id="loader-text" class="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic text-center px-4">Establishing Handshake...</div>
+    <div id="loader-text" class="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic text-center px-4">Restoring Features...</div>
   </div>
 
-  <div id="save-pill" class="save-indicator animate-bounce"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Syncing...</div>
+  <div id="save-pill" class="save-indicator animate-bounce">Syncing...</div>
 
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.57</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.58</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -77,7 +62,7 @@
         <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[8px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Match Squad</p></div>
         <div id="draft-chips" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-zinc-900"></div>
         <div id="bulk-payment-list" class="space-y-3"></div>
-        <div id="bulk-save-area" class="hidden mt-8"><button onclick="submitBulkPayments()" class="w-full bg-emerald-600 text-white font-black py-6 rounded-3xl active:scale-95 transition-all uppercase tracking-widest shadow-xl">Save Selected Payments</button></div>
+        <div id="bulk-save-area" class="hidden mt-8"><button onclick="submitBulkPayments()" class="w-full bg-emerald-600 text-white font-black py-6 rounded-3xl active:scale-95 transition-all uppercase tracking-widest italic shadow-xl">Save Selected Payments</button></div>
       </div>
 
       <div id="players" class="screen mt-4">
@@ -87,12 +72,26 @@
               <div class="audit-grid text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-3 px-1"><span>Match</span><span>Due</span><span>Paid</span><span class="text-right">Balance</span></div>
               <div id="team-audit-list" class="space-y-3 max-h-48 overflow-y-auto no-scrollbar"></div>
           </div>
+          <input id="ledger-search" type="text" placeholder="Search Players..." oninput="renderPlayersList()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4 outline-none focus:border-emerald-500"/>
           <div id="players-list" class="space-y-2"></div>
       </div>
 
       <div id="teams" class="screen mt-4 pb-10">
+        <div class="bg-zinc-900 border border-zinc-800 p-5 mb-6 rounded-3xl shadow-lg border-t-4 border-t-emerald-600">
+            <h2 class="font-black mb-4 uppercase text-[10px] tracking-widest text-emerald-500 italic text-center">Season Config</h2>
+            <input id="season-input" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
+            <div class="flex gap-2 mb-4">
+                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
+                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
+            </div>
+            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest">Update Configuration</button>
+        </div>
+        <div class="flex justify-between items-center px-1 mb-4">
+            <h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2>
+            <button onclick="showFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800">+ New Fixture</button>
+        </div>
         <div id="setup-fixture-list" class="space-y-2"></div>
-        <div class="bg-zinc-900 border border-zinc-800 p-5 mt-8 rounded-3xl shadow-lg">
+        <div class="bg-zinc-900 border border-zinc-800 p-5 mt-12 rounded-3xl shadow-lg">
             <div class="flex justify-between items-center mb-4"><h2 class="font-bold uppercase text-[10px] tracking-widest text-zinc-500">Master List</h2><button onclick="showAddPlayerModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Player</button></div>
             <div id="master-players-list" class="space-y-2"></div>
         </div>
@@ -108,11 +107,39 @@
     </nav>
   </div>
 
+  <div id="fixture-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
+      <h3 id="fixture-modal-title" class="text-xl font-bold mb-6 italic text-emerald-500 uppercase">Match</h3>
+      <div class="space-y-4">
+        <select id="fixture-team-select" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-sm outline-none text-zinc-300"></select>
+        <input id="fixture-opponent" placeholder="vs Opponent" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
+        <input id="fixture-date" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-sm outline-none text-zinc-300"/>
+      </div>
+      <div class="flex gap-3 mt-8"><button onclick="hideModal('fixture-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="saveFixture()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px]">Save</button></div>
+      <div id="fixture-danger-zone" class="hidden mt-6 pt-6 border-t border-red-900/30 text-center"><button onclick="handleDeleteFixture()" class="w-full py-3 text-red-500 border border-red-900/40 rounded-xl text-[10px] font-black uppercase tracking-widest">Delete Match</button></div>
+    </div>
+  </div>
+
   <div id="squad-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[9999] backdrop-blur-md">
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[85vh] shadow-2xl">
       <h3 class="text-xl font-black italic text-emerald-500 uppercase mb-4 text-center">Select Squad</h3>
+      <div class="mb-4"><input type="text" id="squad-picker-search" oninput="filterSquadPickerList()" placeholder="Filter..." class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-xs outline-none text-zinc-300"/></div>
       <div id="fixture-squad-picker" class="flex-1 overflow-y-auto space-y-2 no-scrollbar px-1"></div>
       <div class="flex gap-3 mt-6"><button onclick="hideModal('squad-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="saveFixtureSquad()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px]">Confirm</button></div>
+    </div>
+  </div>
+
+  <div id="player-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
+      <h3 id="modal-title" class="text-xl font-bold mb-6 italic text-emerald-500 uppercase">Profile</h3>
+      <div class="space-y-4">
+        <input id="player-first" placeholder="First Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
+        <input id="player-last" placeholder="Last Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
+        <select id="player-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm outline-none"></select>
+        <div class="flex p-1 bg-zinc-800 rounded-xl border border-zinc-700"><button id="btn-member" onclick="setPlayerType(true)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase">Member</button><button id="btn-casual" onclick="setPlayerType(false)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase">Casual</button></div>
+      </div>
+      <div class="flex gap-3 mt-8"><button onclick="hideModal('player-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="savePlayer()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px]">Save</button></div>
+      <div id="danger-zone" class="hidden mt-6 pt-6 border-t border-red-900/30 text-center"><button onclick="handleDeleteAction()" class="w-full py-3 text-red-500 border border-red-900/40 rounded-xl text-[10px] font-black uppercase tracking-widest">Delete Player</button></div>
     </div>
   </div>
 
@@ -120,11 +147,14 @@
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbxDqpgolrUY3RRBf7OzxMIpE6gIi1YgyYPUkBFlxKgpZ3G3IfUKyY6j3mZaTtBp810P/exec";
     
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {};
-    let activeTeamId = null, activeFixtureId = null, viewSeason = 'all', currentEditId = null;
+    let activeTeamId = null, activeFixtureId = null, currentFixtureEditId = null, viewSeason = 'all', currentEditId = null, selectedIsMember = true;
     let selectedForPayment = [], sessionProcessedIds = [];
     let persistentAmounts = {}; 
+    let hasCheckedAutoClose = false;
 
+    function tryLogin() { document.getElementById('login').style.display='none'; document.getElementById('app').style.display='flex'; window.loadData(); }
     function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+    function toggleSyncPill(s) { document.getElementById('save-pill').style.display = s ? 'block' : 'none'; }
     function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
     function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
 
@@ -135,7 +165,7 @@
             const data = await res.json();
             
             // THE RECOVERY SCRIPT: Map messy sheet headers to clean keys
-            const mapData = (arr) => arr.map(item => {
+            const mapData = (arr) => (arr || []).map(item => {
                 let clean = {};
                 for (let k in item) {
                     let key = k.toLowerCase().replace(/\s/g, '');
@@ -150,16 +180,17 @@
                 return clean;
             });
 
-            players = mapData(data.players || []);
-            transactions = mapData(data.transactions || []);
-            fixtures = mapData(data.fixtures || []);
-            teams = mapData(data.teams || []);
-            fixturesSquad = mapData(data.fixturesSquad || []);
+            players = mapData(data.players);
+            transactions = mapData(data.transactions);
+            fixtures = mapData(data.fixtures);
+            teams = mapData(data.teams);
+            fixturesSquad = mapData(data.fixturesSquad);
             config = data.config || {};
             
             if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id;
             renderAll();
-        } catch (e) { if(!isSilent) alert("Sync failed."); }
+            if(!hasCheckedAutoClose && !isSilent) { hasCheckedAutoClose = true; safeAutoClose(); }
+        } catch (e) { if(!isSilent) alert("Handshake Failed."); }
         toggleLoader(false);
     }
 
@@ -169,8 +200,10 @@
 
     function renderAll() {
         updateUI('active-season-label', config.currentseason || "Season 2026");
-        renderTeamPills(); findCurrentMatch(); renderPlayersList(); renderGamedaySelection(); renderMasterPlayerList(); renderSetupFixtures(); renderTeamAudit();
+        renderTeamPills(); findCurrentMatch(); renderPlayersList(); renderGamedaySelection(); renderMasterPlayerList(); renderSetupFixtures(); renderTeamAudit(); populateDropdowns();
     }
+
+    function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name || 'Team'}</button>`).join(''); }); }
 
     function findCurrentMatch() {
         const card = document.getElementById('fixture-card');
@@ -183,42 +216,80 @@
         const chipContainer = document.getElementById('draft-chips');
         const bulkList = document.getElementById('bulk-payment-list');
         const label = document.getElementById('draft-chips-label');
-        if (!activeFixtureId) {
-            chipContainer.innerHTML = ''; label.classList.add('hidden'); bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-[10px] font-bold italic uppercase">No match scheduled</div>`; return;
-        }
+        if (!activeFixtureId) { chipContainer.innerHTML = ''; label.classList.add('hidden'); bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-[10px] font-bold italic uppercase">No match scheduled</div>`; return; }
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
         const available = players.filter(p => assignedIds.includes(p.id) && !sessionProcessedIds.includes(p.id));
         label.classList.toggle('hidden', available.length === 0);
         chipContainer.innerHTML = available.map(p => {
             const initial = p.lastName ? ` ${p.lastName.charAt(0)}.` : '';
-            return `<button onclick="togglePlayerSelection('${p.id}')" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-zinc-800 text-emerald-400'}">${((p.firstName || 'N/A') + initial).toUpperCase()}</button>`;
+            return `<button onclick="togglePlayerSelection('${p.id}')" class="px-4 py-3 rounded-2xl text-[10px] font-black border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-zinc-800 text-emerald-400'}">${((p.firstName || 'N/A') + initial).toUpperCase()}</button>`;
         }).join('');
-        if (selectedForPayment.length > 0) {
-            document.getElementById('bulk-save-area').classList.remove('hidden');
-            bulkList.innerHTML = selectedForPayment.map(pid => {
-                const p = players.find(x => x.id === pid);
-                return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl flex items-center gap-4"><div class="flex-1"><div class="font-bold text-sm text-white">${p.firstName}</div><div class="text-[9px] text-zinc-500 uppercase font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div><div class="bg-black/40 px-3 py-2 rounded-xl border border-zinc-800"><input type="number" id="amt-${pid}" value="${persistentAmounts[pid] || ''}" oninput="persistentAmounts['${pid}']=this.value" placeholder="0" class="w-20 bg-transparent text-xl font-black text-emerald-500 outline-none text-right" /></div></div>`;
-            }).join('');
-        } else { document.getElementById('bulk-save-area').classList.add('hidden'); bulkList.innerHTML = available.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[10px] uppercase">Select chips above</div>` : ''; }
+        if (selectedForPayment.length > 0) { document.getElementById('bulk-save-area').classList.remove('hidden'); bulkList.innerHTML = selectedForPayment.map(pid => { const p = players.find(x => x.id === pid); return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl flex items-center gap-4"><div class="flex-1"><div class="font-bold text-sm text-white">${p.firstName}</div><div class="text-[9px] text-zinc-500 font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div><div class="bg-black/40 px-3 py-2 rounded-xl border border-zinc-800"><input type="number" id="amt-${pid}" value="${persistentAmounts[pid] || ''}" oninput="persistentAmounts['${pid}']=this.value" placeholder="0" class="w-20 bg-transparent text-xl font-black text-emerald-500 outline-none text-right" /></div></div>`; }).join(''); } 
+        else { document.getElementById('bulk-save-area').classList.add('hidden'); bulkList.innerHTML = available.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[10px] uppercase">Select chips above</div>` : ''; }
     }
 
-    function renderPlayersList() {
-        const list = document.getElementById('players-list');
-        let filtered = players.filter(p => p.teamId === activeTeamId);
-        list.innerHTML = filtered.map(p => {
-            const bal = getSafeBalance(p.id);
-            return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center mb-1"><div><div class="font-bold text-zinc-100 text-sm">${p.firstName} ${p.lastName || ''}</div></div><div class="text-lg font-black ${bal<0?'text-red-500':'text-emerald-500'} italic">$${bal.toFixed(2)}</div></div>`;
-        }).join('');
+    function renderSetupFixtures() {
+        const list = document.getElementById('setup-fixture-list');
+        let html = "";
+        teams.forEach(team => {
+            const teamFixtures = fixtures.filter(f => f.teamId === team.id).sort((a,b) => new Date(a.date)-new Date(b.date));
+            if(teamFixtures.length > 0) {
+                html += `<div class="team-group-header uppercase">${team.name}</div>`;
+                teamFixtures.forEach(f => {
+                    html += `<div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex justify-between items-center mb-3 shadow-lg"><div onclick="showFixtureModal('${f.id}')" class="flex-1"><div class="font-bold text-xs text-white">vs ${f.opponent}</div><div class="text-[8px] text-emerald-500 font-black">${formatAUDate(f.date)}</div></div><button onclick="openSquadSelector('${f.id}')" class="bg-emerald-600/10 text-emerald-500 text-[8px] font-black px-4 py-2 rounded-xl border border-emerald-900/30">Squad</button></div>`;
+                });
+            }
+        });
+        list.innerHTML = html;
     }
 
-    function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name || 'Team'}</button>`).join(''); }); }
+    function openSquadSelector(fid) { 
+        activeFixtureId = fid; 
+        const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId);
+        const list = document.getElementById('fixture-squad-picker'); 
+        list.innerHTML = players.sort((a,b)=>a.firstName.localeCompare(b.firstName)).map(p => `<div class="bg-zinc-800/40 p-4 rounded-2xl flex justify-between border border-zinc-800 mb-2"><span class="font-bold text-sm">${p.firstName} ${p.lastName}</span><input type="checkbox" value="${p.id}" ${currentSquadIds.includes(p.id) ? 'checked' : ''} class="w-6 h-6"></div>`).join(''); 
+        document.getElementById('squad-modal').classList.remove('hidden'); 
+    }
+
+    function showFixtureModal(existingId = null) {
+        currentFixtureEditId = existingId;
+        const teamSelect = document.getElementById('fixture-team-select');
+        teamSelect.innerHTML = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        if (existingId) {
+            const f = fixtures.find(x => x.id === existingId);
+            document.getElementById('fixture-modal-title').innerText = "Edit Match";
+            teamSelect.value = f.teamId;
+            document.getElementById('fixture-opponent').value = f.opponent;
+            document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : "";
+            document.getElementById('fixture-danger-zone').classList.remove('hidden');
+        } else {
+            document.getElementById('fixture-modal-title').innerText = "New Match";
+            if(activeTeamId) teamSelect.value = activeTeamId;
+            document.getElementById('fixture-opponent').value = '';
+            document.getElementById('fixture-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('fixture-danger-zone').classList.add('hidden');
+        }
+        document.getElementById('fixture-modal').classList.remove('hidden');
+    }
+
+    // (Preserving all other core logic - identical to v1.44 features)
+    function captureAmount(pid, val) { persistentAmounts[pid] = val; }
     function togglePlayerSelection(pid) { if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } else selectedForPayment.push(pid); renderGamedaySelection(); }
-    function renderSetupFixtures() { const list = document.getElementById('setup-fixture-list'); list.innerHTML = fixtures.map(f => `<div class="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 flex justify-between items-center mb-3"><div><div class="font-bold text-xs">vs ${f.opponent}</div><div class="text-[8px] text-emerald-500 font-black">${formatAUDate(f.date)}</div></div><button onclick="openSquadSelector('${f.id}')" class="bg-emerald-600/10 text-emerald-500 text-[8px] font-black px-4 py-2 rounded-xl border border-emerald-900/30">Squad</button></div>`).join(''); }
-    function renderMasterPlayerList() { const list = document.getElementById('master-players-list'); list.innerHTML = players.map(p => `<div class="bg-zinc-800/30 border border-zinc-800 p-3 rounded-xl mb-1 text-xs font-bold">${p.firstName} ${p.lastName}</div>`).join(''); }
-    function renderTeamAudit() { const list = document.getElementById('team-audit-list'); if (!list) return; const matches = [...new Set(transactions.filter(t => t.teamId === activeTeamId).map(t => t.note))]; list.innerHTML = matches.map(m => `<div class="audit-grid text-[10px] font-bold py-1 border-b border-zinc-800 text-zinc-400"><span>${m}</span><span>-</span><span>-</span><span class="text-right">Audit Active</span></div>`).join(''); }
-    async function submitBulkPayments() { toggleLoader(true); const toPay = [...selectedForPayment]; const amounts = {...persistentAmounts}; const opp = document.getElementById('match-vs').innerText.replace('vs ','') || 'Match'; try { for (const pid of toPay) { const amt = parseFloat(amounts[pid]) || 0; if (amt > 0) { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logPaymentOnly", playerId: pid, amount: amt, teamId: activeTeamId, opponent: opp }) }); } sessionProcessedIds.push(pid); } selectedForPayment = []; persistentAmounts = {}; await window.loadData(); } catch(e) { alert("Save failed."); } toggleLoader(false); }
-    function openSquadSelector(fid) { activeFixtureId = fid; const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); const list = document.getElementById('fixture-squad-picker'); list.innerHTML = players.map(p => `<div class="bg-zinc-800/40 p-4 rounded-2xl flex justify-between border border-zinc-800 mb-2"><span class="font-bold text-sm">${p.firstName} ${p.lastName}</span><input type="checkbox" value="${p.id}" ${currentSquadIds.includes(p.id) ? 'checked' : ''} class="w-6 h-6"></div>`).join(''); document.getElementById('squad-modal').classList.remove('hidden'); }
+    function renderPlayersList() { const list = document.getElementById('players-list'); const term = (document.getElementById('ledger-search')?.value || '').toLowerCase(); let filtered = players.filter(p => p.teamId === activeTeamId && `${p.firstName} ${p.lastName}`.toLowerCase().includes(term)); list.innerHTML = filtered.map(p => { const bal = getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all"><div><div class="font-bold text-zinc-100 text-sm">${p.firstName} ${p.lastName || ''}</div></div><div class="text-lg font-black ${bal<0?'text-red-500':'text-emerald-500'} italic">$${bal.toFixed(2)}</div></div>`; }).join(''); }
+    function renderMasterPlayerList() { const list = document.getElementById('master-players-list'); list.innerHTML = players.map(p => `<div class="bg-zinc-800/30 border border-zinc-800 p-3 rounded-xl flex justify-between items-center mb-1"><div class="font-bold text-xs">${p.firstName} ${p.lastName}</div><button onclick="openEditFromSetup('${p.id}')" class="h-8 w-8 bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-400"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`).join(''); }
+    function renderTeamAudit() { const list = document.getElementById('team-audit-list'); if (!list) return; const teamTx = transactions.filter(t => t.teamId === activeTeamId); const matches = [...new Set(teamTx.map(t => t.note))]; list.innerHTML = matches.map(m => `<div class="audit-grid text-[10px] font-bold py-1 border-b border-zinc-800 text-zinc-400"><span>${m}</span><span>-</span><span>-</span><span class="text-right">Audit Active</span></div>`).join(''); }
+    function populateDropdowns() { const html = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); document.getElementById('player-team-assign').innerHTML = '<option value="">No Team Assigned</option>' + html; }
+    function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function switchScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); }
+    async function submitBulkPayments() { toggleLoader(true); const toPay = [...selectedForPayment]; const opp = document.getElementById('match-vs').innerText.replace('vs ','') || 'Match'; try { for (const pid of toPay) { const amt = parseFloat(persistentAmounts[pid]) || 0; if (amt > 0) { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logPaymentOnly", playerId: pid, amount: amt, teamId: activeTeamId, opponent: opp }) }); } sessionProcessedIds.push(pid); } selectedForPayment = []; persistentAmounts = {}; await window.loadData(); } catch(e) { alert("Save failed."); } toggleLoader(false); }
     async function saveFixtureSquad() { const checks = document.querySelectorAll('#fixture-squad-picker input:checked'); const ids = Array.from(checks).map(c => c.value); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: ids }) }); hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Error"); } toggleLoader(false); }
+    async function saveFixture() { const teamId = document.getElementById('fixture-team-select').value; const opponent = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const id = currentFixtureEditId || 'f'+Date.now(); if(!opponent || !date) return alert("Required"); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id, teamId, opponent, date }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { alert("Save Error."); } toggleLoader(false); }
+    async function handleDeleteFixture() { if(!currentFixtureEditId) return; if(!confirm("Delete?")) return; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { alert("Failed."); } toggleLoader(false); }
+    function showGamedaySuggestions() { const input = document.getElementById('gameday-search'); const term = input.value.trim().toLowerCase(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !sessionProcessedIds.includes(p.id) && `${p.firstName} ${p.lastName}`.toLowerCase().includes(term)); let html = filtered.map(p => `<div onclick="selectedForPayment.push('${p.id}'); document.getElementById('gameday-search').value=''; renderAll();" class="p-4 border-b border-zinc-800 active:bg-zinc-800 text-emerald-500 font-bold text-sm">${p.firstName} ${p.lastName} +</div>`).join(''); sug.innerHTML = html; sug.classList.remove('hidden'); }
+    async function savePlayer() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; const id = currentEditId || 'p'+Date.now(); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id, firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); hideModal('player-modal'); await window.loadData(); } catch(e) { alert("Save Error"); } toggleLoader(false); }
+    async function handleSeasonUpdate() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; if(!n||!s||!e) return alert("Required"); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { alert("Save Error"); } toggleLoader(false); }
+    function openEditFromSetup(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('modal-title').innerText = "Edit Profile"; document.getElementById('player-first').value = p.firstName || ''; document.getElementById('player-last').value = p.lastName || ''; document.getElementById('player-team-assign').value = p.teamId || ""; document.getElementById('player-modal').classList.remove('hidden'); }
+    function showAddPlayerModal() { currentEditId = null; document.getElementById('modal-title').innerText = "New Profile"; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || ""; document.getElementById('player-modal').classList.remove('hidden'); }
   </script>
 </body>
 </html>
