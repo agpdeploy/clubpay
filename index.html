@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.63 - FDCC Restore</title>
+  <title>🏏 ClubPay v1.65 - FDCC Final</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -21,20 +21,20 @@
 
   <div id="loader" class="loading-overlay">
     <div class="animate-spin text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-sync"></i></div>
-    <div class="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">Connecting...</div>
+    <div class="text-[10px] font-black uppercase tracking-widest text-emerald-500 italic">Syncing FDCC Database...</div>
   </div>
 
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.63</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.65</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
 
   <div id="app" style="display:none;" class="flex-col min-h-screen mx-auto max-w-[480px] bg-zinc-950 shadow-2xl">
     <header class="p-4 border-b border-zinc-800 flex justify-between items-center bg-black/80 backdrop-blur-md z-40">
-      <h1 class="text-xl font-black italic text-emerald-500 uppercase">ClubPay</h1>
+      <h1 class="text-xl font-black italic text-emerald-500 uppercase tracking-tighter">ClubPay</h1>
       <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate"></i></button>
     </header>
 
@@ -68,7 +68,7 @@
   <script>
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbxDqpgolrUY3RRBf7OzxMIpE6gIi1YgyYPUkBFlxKgpZ3G3IfUKyY6j3mZaTtBp810P/exec";
     
-    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [];
+    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {};
     let activeTeamId = null;
     let selectedForPayment = [], persistentAmounts = {};
 
@@ -87,17 +87,25 @@
             const res = await fetch(DATABASE_URL + "?action=getData");
             const data = await res.json();
             
-            // Normalize data structures immediately
-            players = (data.players || []).map(p => ({...p, id: String(p.id), defaultTeam: String(p.defaultTeam)}));
-            transactions = (data.transactions || []).map(t => ({...t, playerId: String(t.playerId)}));
-            fixtures = (data.fixtures || []).map(f => ({...f, id: String(f.id), teamId: String(f.teamId)}));
-            teams = (data.teams || []).map(t => ({...t, id: String(t.id)}));
-            fixturesSquad = (data.fixturesSquad || []).map(s => ({...s, fixtureId: String(s.fixtureId), playerId: String(s.playerId)}));
+            // Syncing variables to the Script's output structure
+            players = data.players || [];
+            transactions = data.transactions || [];
+            fixtures = data.fixtures || [];
+            teams = data.teams || [];
+            fixturesSquad = data.fixturesSquad || [];
+            config = data.config || {};
             
-            if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id;
+            if(!activeTeamId && teams.length > 0) activeTeamId = String(teams[0].id);
             renderAll();
-        } catch (e) { alert("Connection Error. Ensure Apps Script is deployed to 'Anyone'."); }
+        } catch (e) { alert("Data handover failed. Check script permissions."); }
         toggleLoader(false);
+    }
+
+    function getSafeBalance(pid) {
+        // playerId is at index r[1] in the Gold Script's transaction map
+        return transactions
+            .filter(t => String(t.playerId) === String(pid))
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     }
 
     function renderAll() {
@@ -108,13 +116,18 @@
     }
 
     function renderTeamPills() {
-        const html = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId == t.id ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join('');
-        document.getElementById('team-pills-gameday').innerHTML = html;
-        document.getElementById('team-pills-ledger').innerHTML = html;
+        const containers = [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')];
+        const html = teams.map(t => `
+            <button onclick="activeTeamId='${t.id}'; renderAll();" 
+            class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all 
+            ${String(activeTeamId) === String(t.id) ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">
+                ${t.name}
+            </button>`).join('');
+        containers.forEach(c => { if(c) c.innerHTML = html; });
     }
 
     function findCurrentMatch() {
-        const m = fixtures.find(f => f.teamId == activeTeamId);
+        const m = fixtures.find(f => String(f.teamId) === String(activeTeamId));
         if(m) {
             document.getElementById('match-vs').innerText = "vs " + (m.opponent || 'TBA');
             document.getElementById('fixture-card').classList.remove('hidden');
@@ -124,30 +137,30 @@
     }
 
     function renderGamedaySelection() {
-        const fixture = fixtures.find(f => f.teamId == activeTeamId);
+        const fixture = fixtures.find(f => String(f.teamId) === String(activeTeamId));
         const chipContainer = document.getElementById('draft-chips');
         const bulkList = document.getElementById('bulk-payment-list');
         
         if (!fixture) {
-            chipContainer.innerHTML = ''; bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-[10px] font-bold uppercase italic">No match scheduled</div>`;
+            chipContainer.innerHTML = ''; 
+            bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-[10px] font-bold uppercase italic">No match scheduled</div>`;
             return;
         }
 
-        const assignedIds = fixturesSquad.filter(s => s.fixtureId == fixture.id).map(s => s.playerId);
-        const available = players.filter(p => assignedIds.includes(p.id));
+        const assignedIds = fixturesSquad.filter(s => String(s.fixtureId) === String(fixture.id)).map(s => String(s.playerId));
+        const available = players.filter(p => assignedIds.includes(String(p.id)));
         
-        chipContainer.innerHTML = available.map(p => {
-            const initial = p.lastName ? ` ${p.lastName.charAt(0)}.` : '';
-            return `<button onclick="togglePlayerSelection('${p.id}')" class="px-4 py-3 rounded-2xl text-[10px] font-black border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-zinc-800 text-emerald-400'}">${(p.firstName + initial).toUpperCase()}</button>`;
-        }).join('');
+        chipContainer.innerHTML = available.map(p => `
+            <button onclick="togglePlayerSelection('${p.id}')" class="px-4 py-3 rounded-2xl text-[10px] font-black border transition-all ${selectedForPayment.includes(String(p.id)) ? 'chip-active' : 'bg-zinc-900 border-zinc-800 text-emerald-400'}">
+                ${p.firstName.toUpperCase()}
+            </button>`).join('');
 
         if (selectedForPayment.length > 0) {
             document.getElementById('bulk-save-area').classList.remove('hidden');
             bulkList.innerHTML = selectedForPayment.map(pid => {
-                const p = players.find(x => x.id == pid);
-                const bal = transactions.filter(t => t.playerId == pid).reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
-                return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl flex items-center gap-4">
-                    <div class="flex-1"><div class="font-bold text-sm text-white">${p.firstName}</div><div class="text-[9px] text-zinc-500 font-black">Bal: $${bal.toFixed(2)}</div></div>
+                const p = players.find(x => String(x.id) === String(pid));
+                return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl flex items-center gap-4 animate-in fade-in">
+                    <div class="flex-1"><div class="font-bold text-sm text-white">${p.firstName}</div><div class="text-[9px] text-zinc-500 font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div>
                     <div class="bg-black/40 px-3 py-2 rounded-xl border border-zinc-800"><input type="number" value="${persistentAmounts[pid] || ''}" oninput="persistentAmounts['${pid}']=this.value" placeholder="0" class="w-20 bg-transparent text-xl font-black text-emerald-500 outline-none text-right" /></div>
                 </div>`;
             }).join('');
@@ -155,15 +168,17 @@
     }
 
     function togglePlayerSelection(pid) {
+        pid = String(pid);
         if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } 
         else selectedForPayment.push(pid);
         renderGamedaySelection();
     }
 
     function renderPlayersList() {
-        const filtered = players.filter(p => p.defaultTeam == activeTeamId);
+        // filter by defaultTeam (String) to match script
+        const filtered = players.filter(p => String(p.defaultTeam) === String(activeTeamId));
         document.getElementById('players-list').innerHTML = filtered.map(p => {
-            const bal = transactions.filter(t => t.playerId == p.id).reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+            const bal = getSafeBalance(p.id);
             return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center mb-1">
                 <div class="font-bold text-zinc-100 text-sm">${p.firstName} ${p.lastName}</div>
                 <div class="text-lg font-black ${bal<0?'text-red-500':'text-emerald-500'} italic">$${bal.toFixed(2)}</div>
@@ -173,7 +188,8 @@
 
     async function submitBulkPayments() {
         toggleLoader(true);
-        const opp = document.getElementById('match-vs').innerText.replace('vs ','') || 'Match';
+        const m = fixtures.find(f => String(f.teamId) === String(activeTeamId));
+        const opp = m ? m.opponent : 'Match';
         for (const pid of selectedForPayment) {
             const amt = parseFloat(persistentAmounts[pid]) || 0;
             if (amt > 0) await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "logPaymentOnly", playerId: pid, amount: amt, teamId: activeTeamId, opponent: opp }) });
