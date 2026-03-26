@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.61</title>
+  <title>🏏 ClubPay v1.63</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -41,8 +41,8 @@
 <body>
 
   <div id="loader" class="loading-overlay">
-    <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-baseball-bat-ball"></i></div>
-    <div id="loader-text" class="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-500 italic text-center px-8 leading-relaxed">Checking the pitch...</div>
+    <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
+    <div id="loader-text" class="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-500 italic text-center px-10 leading-relaxed">Bill's putting on the headset...</div>
   </div>
 
   <div id="save-pill" class="save-indicator animate-bounce"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Syncing...</div>
@@ -50,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.61</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.63</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -77,7 +77,6 @@
         </div>
         <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[8px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Match Squad (Unpaid)</p></div>
         <div id="draft-chips" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-zinc-900"></div>
-        
         <div id="bulk-payment-list" class="space-y-3"></div>
 
         <div id="bulk-save-area" class="hidden mt-8">
@@ -90,7 +89,6 @@
               <div id="umpire-ball" class="absolute top-1 left-1 w-4 h-4 rounded-full bg-zinc-600 transition-all"></div>
             </button>
           </div>
-
           <div class="flex justify-between items-center mb-4 px-2">
             <span class="text-[10px] font-black uppercase text-zinc-500 italic">Net Take:</span>
             <span id="session-total-display" class="text-xl font-black text-emerald-500 italic">$0.00</span>
@@ -120,13 +118,10 @@
             </div>
             <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg">Update Season Window</button>
         </div>
-
         <div class="flex justify-between items-center mb-4 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Team</button></div>
         <div id="setup-team-list" class="flex flex-wrap gap-2 mb-8"></div>
-
         <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
         <div id="setup-fixture-list" class="space-y-2"></div>
-
         <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-6 mt-12 rounded-3xl shadow-lg">
             <div class="flex justify-between items-center mb-6"><h2 class="font-bold uppercase text-[10px] tracking-widest text-zinc-500">Master Player List</h2><button onclick="showAddPlayerModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Player</button></div>
             <div id="master-players-list" class="space-y-6"></div>
@@ -207,18 +202,18 @@
     let persistentAmounts = {}; 
 
     const quotes = [
-      "Bowling Shane!",
-      "Tell him he's dreaming...",
-      "Straight through 'em!",
-      "Just give 'em the cherry.",
-      "Get 'em in the ribcage.",
-      "Can't bowl, can't throw.",
-      "That's outside the line.",
-      "Rub some dirt on it.",
-      "I don't think he likes it.",
-      "Put him on the bike.",
-      "Walking the wicket...",
-      "Applying the sunscreen..."
+      "Marvellous effort that. Richie, your thoughts?",
+      "Got him! Yes! P*** off, you're out!",
+      "I've got a bit of a tingle down my leg, Tony.",
+      "Just wait for the heavy breathing... (Haaa-haaa)",
+      "Can't bowl, can't throw. Scott Muller, you're a genius.",
+      "Morning everyone, Richie Benaud here...",
+      "What a ripper! Straight through the gate!",
+      "He's hit that like a tracer bullet!",
+      "Strewth, look at the size of that! Huge!",
+      "I'm Bill Lawry, and I'm a very angry man!",
+      "Tony, have you seen my beige jacket?",
+      "Welcome back to the commentary box..."
     ];
 
     function toggleLoader(s) { 
@@ -226,9 +221,7 @@
         if (s) {
             document.getElementById('loader-text').innerText = quotes[Math.floor(Math.random() * quotes.length)];
             el.style.display = 'flex';
-        } else {
-            el.style.display = 'none';
-        }
+        } else { el.style.display = 'none'; }
     }
     
     function toggleSyncPill(s) { document.getElementById('save-pill').style.display = s ? 'block' : 'none'; }
@@ -367,21 +360,13 @@
       const teamTx = transactions.filter(t => t.teamId === activeTeamId && isWithinSeason(t.date));
       const matchNames = [...new Set(teamTx.filter(t => t.note).map(t => t.note))];
       let seasonTotal = 0;
-
       list.innerHTML = matchNames.map(mName => {
         const mTx = teamTx.filter(t => t.note === mName);
         const playerDue = Math.abs(mTx.filter(t => t.type === 'match_fee').reduce((s,t) => s+t.amount, 0));
         const expense = Math.abs(mTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0));
         const paid = mTx.filter(t => t.type === 'payment').reduce((s,t) => s+t.amount, 0);
-        const combinedFee = playerDue + expense;
-        const netProfit = paid - expense; seasonTotal += netProfit;
-
-        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-900 pb-1 flex justify-between text-[9px] tracking-tighter">
-            <span class="w-16 overflow-hidden italic uppercase text-[8px] truncate">${mName}</span>
-            <span class="text-zinc-400">$${combinedFee.toFixed(0)}</span>
-            <span class="text-emerald-500">$${paid.toFixed(0)}</span>
-            <span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic font-black">$${netProfit.toFixed(0)}</span>
-        </div>`;
+        const combinedFee = playerDue + expense; const netProfit = paid - expense; seasonTotal += netProfit;
+        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-900 pb-1 flex justify-between text-[9px] tracking-tighter"><span class="w-16 overflow-hidden italic uppercase text-[8px] truncate">${mName}</span><span class="text-zinc-400">$${combinedFee.toFixed(0)}</span><span class="text-emerald-500">$${paid.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic font-black">$${netProfit.toFixed(0)}</span></div>`;
       }).join('');
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET TAKE`);
     }
