@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.58</title>
+  <title>🏏 ClubPay v1.59</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -16,7 +16,8 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     #gameday-suggestions { position: fixed; background: #18181b; border: 2px solid #3f3f46; border-radius: 1rem; max-height: 300px; overflow-y: auto; z-index: 2000; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
     .chip-active { background: #059669 !important; color: white !important; border-color: #10b981 !important; }
-    .audit-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 8px; align-items: center; }
+    /* Updated Audit Grid for 5 columns */
+    .audit-grid { display: grid; grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr; gap: 4px; align-items: center; }
     .toggle-active { background: #059669 !important; color: white !important; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
     .save-indicator { position: fixed; bottom: 80px; right: 20px; background: #059669; color: white; padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; display: none; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
     .team-group-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #52525b; margin-top: 24px; margin-bottom: 8px; padding-left: 4px; border-left: 3px solid #22c55e; }
@@ -50,7 +51,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.58</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.59</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -75,7 +76,7 @@
             <input id="gameday-search" type="text" autocomplete="off" placeholder="Search for a Player" oninput="showGamedaySuggestions()" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl px-4 py-4 text-lg outline-none focus:border-emerald-500 transition-all shadow-inner"/>
             <div id="gameday-suggestions" class="hidden"></div>
         </div>
-        <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[8px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Match Squad</p></div>
+        <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[8px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Match Squad (Unpaid)</p></div>
         <div id="draft-chips" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-zinc-900"></div>
         
         <div id="bulk-payment-list" class="space-y-3"></div>
@@ -101,10 +102,10 @@
 
       <div id="players" class="screen mt-4">
           <div id="team-pills-ledger" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"></div>
-          <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 mb-6 shadow-lg border-t-4 border-t-emerald-500">
+          <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-4 mb-6 shadow-lg border-t-4 border-t-emerald-500">
               <div class="flex justify-between items-center mb-4"><h2 class="font-black uppercase text-[10px] tracking-widest text-emerald-500 italic">Season Audit</h2><div id="team-season-total" class="text-[10px] font-black text-white bg-zinc-800 px-3 py-1 rounded-full uppercase"></div></div>
-              <div class="audit-grid text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-3 px-1"><span>Match</span><span>Due/Exp</span><span>Paid</span><span class="text-right">Net</span></div>
-              <div id="team-audit-list" class="space-y-3 max-h-48 overflow-y-auto no-scrollbar"></div>
+              <div class="audit-grid text-[7px] font-black text-zinc-600 uppercase tracking-tighter mb-3 px-1"><span>Match</span><span>Match Fees</span><span>Umpire</span><span>Paid</span><span class="text-right">Net</span></div>
+              <div id="team-audit-list" class="space-y-3 max-h-64 overflow-y-auto no-scrollbar"></div>
           </div>
           <input id="ledger-search" type="text" placeholder="Search Players..." oninput="renderPlayersList()" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 mb-4 outline-none focus:border-emerald-500"/>
           <div id="players-list" class="space-y-2"></div>
@@ -290,10 +291,23 @@
             bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-[10px] uppercase font-bold italic">No match scheduled today</div>`;
             return;
         }
+        
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
-        const available = players.filter(p => assignedIds.includes(p.id) && !sessionProcessedIds.includes(p.id));
-        label.classList.toggle('hidden', available.length === 0);
-        chipContainer.innerHTML = available.map(p => {
+        const currentMatch = fixtures.find(f => f.id === activeFixtureId);
+        
+        // FILTER: Remove players who have already paid for this opponent/team this season
+        const unpaidAvailable = players.filter(p => {
+            const hasPaidThisMatch = transactions.some(t => 
+                t.playerId === p.id && 
+                t.note === currentMatch.opponent && 
+                t.type === 'payment' &&
+                isWithinSeason(t.date)
+            );
+            return assignedIds.includes(p.id) && !hasPaidThisMatch && !sessionProcessedIds.includes(p.id);
+        });
+
+        label.classList.toggle('hidden', unpaidAvailable.length === 0);
+        chipContainer.innerHTML = unpaidAvailable.map(p => {
             const lastInitial = p.lastName ? ` ${p.lastName.charAt(0)}.` : '';
             return `<button onclick="togglePlayerSelection('${p.id}')" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-emerald-900/30 text-emerald-400'}">${(p.firstName + lastInitial).toUpperCase()}</button>`;
         }).join('');
@@ -305,7 +319,10 @@
                 return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-3xl shadow-xl flex items-center gap-4 animate-in fade-in zoom-in duration-200"><div class="flex-1"><div class="font-bold text-sm text-white">${p.firstName} ${p.lastName}</div><div class="text-[9px] text-zinc-500 uppercase font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div><div class="bg-black/40 px-3 py-2 rounded-xl border border-zinc-800"><input type="number" id="amt-${pid}" inputmode="decimal" placeholder="0" value="${persistentAmounts[pid] || ''}" oninput="captureAmount('${pid}', this.value)" class="w-20 bg-transparent text-xl font-black text-emerald-500 outline-none text-right" /></div></div>`;
             }).join('');
             calculateSessionTotal();
-        } else { saveArea.classList.add('hidden'); bulkList.innerHTML = available.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[10px] uppercase tracking-widest">Select chips above to enter payments</div>` : ''; }
+        } else { 
+            saveArea.classList.add('hidden'); 
+            bulkList.innerHTML = unpaidAvailable.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[10px] uppercase tracking-widest">Select chips above to enter payments</div>` : (assignedIds.length > 0 ? `<div class="py-10 text-center text-emerald-500/40 text-[10px] font-black uppercase tracking-widest italic"><i class="fa-solid fa-check-double mr-2"></i> All squad payments logged</div>` : ''); 
+        }
     }
 
     function captureAmount(pid, val) { persistentAmounts[pid] = val; calculateSessionTotal(); }
@@ -360,7 +377,13 @@
         const paid = mTx.filter(t => t.type === 'payment').reduce((s,t) => s+t.amount, 0);
         const netProfit = paid - expense; seasonTotal += netProfit;
 
-        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-900 pb-1 flex justify-between text-[10px]"><span class="w-24 overflow-hidden italic uppercase text-[9px] truncate">${mName}</span><span class="text-zinc-400">$${(playerDue + expense).toFixed(0)}</span><span class="text-emerald-500">$${paid.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic">$${netProfit.toFixed(0)}</span></div>`;
+        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-900 pb-1 flex justify-between text-[9px] tracking-tighter">
+            <span class="w-16 overflow-hidden italic uppercase text-[8px] truncate">${mName}</span>
+            <span class="text-zinc-400">$${playerDue.toFixed(0)}</span>
+            <span class="text-amber-500">$${expense.toFixed(0)}</span>
+            <span class="text-emerald-500">$${paid.toFixed(0)}</span>
+            <span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic font-black">$${netProfit.toFixed(0)}</span>
+        </div>`;
       }).join('');
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET TAKE`);
     }
