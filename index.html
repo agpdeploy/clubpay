@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.70</title>
+  <title>Fees Please 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -17,7 +17,6 @@
     #gameday-suggestions { position: fixed; background: #18181b; border: 2px solid #3f3f46; border-radius: 1rem; max-height: 300px; overflow-y: auto; z-index: 2000; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); }
     .chip-active { background: #059669 !important; color: white !important; border-color: #10b981 !important; }
     .audit-grid { display: grid; grid-template-columns: 1.2fr 0.9fr 0.8fr 0.8fr; gap: 8px; align-items: center; }
-    .save-indicator { position: fixed; bottom: 80px; right: 20px; background: #059669; color: white; padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; display: none; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
     .team-group-header { font-size: 11px; font-weight: 900; letter-spacing: 0.1em; color: #71717a; margin-top: 28px; margin-bottom: 12px; padding-left: 6px; border-left: 4px solid #22c55e; }
   </style>
 
@@ -35,16 +34,14 @@
 
   <div id="loader" class="loading-overlay">
     <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
-    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Bill's putting on the headset...</div>
+    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Checking the pitch...</div>
   </div>
 
   <div id="login-screen" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
-    <button onclick="localStorage.clear(); location.reload();" class="absolute top-8 right-8 text-zinc-800 hover:text-red-500 transition-colors">
-        <i class="fa-solid fa-power-off text-2xl"></i>
-    </button>
+    <button onclick="localStorage.clear(); location.reload();" class="absolute top-8 right-8 text-zinc-800 hover:text-red-500 transition-colors"><i class="fa-solid fa-power-off text-2xl"></i></button>
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
-      <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay Login</h1>
+      <div class="text-7xl mb-4 text-emerald-500 font-black italic">FP</div>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">Fees Please</h1>
       <div class="space-y-3 mb-6 text-left">
         <label class="text-[9px] font-black uppercase text-zinc-500 ml-2">Username</label>
         <input id="login-user" type="text" placeholder="Username" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-emerald-500 mb-2"/>
@@ -58,19 +55,18 @@
   <div id="app" style="display:none;" class="flex-col min-h-screen mx-auto max-w-[480px] bg-zinc-950 shadow-2xl">
     <header class="sticky top-0 p-4 border-b border-zinc-800 flex justify-between items-center bg-black/80 backdrop-blur-md z-40">
       <div>
-        <h1 class="text-2xl font-black italic text-emerald-500 uppercase tracking-tighter">ClubPay</h1>
+        <h1 class="text-2xl font-black italic text-emerald-500 uppercase tracking-tighter">Fees Please</h1>
         <p id="active-season-label" class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest"></p>
       </div>
       <div class="flex items-center gap-3">
         <span id="user-display" class="text-[9px] font-black uppercase text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800"></span>
-        <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate text-lg"></i></button>
+        <button onclick="window.loadData()" class="text-emerald-500 w-12 h-12 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate text-lg"></i></button>
         <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 active:scale-90 transition-all border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </header>
 
     <main class="flex-1 overflow-y-auto pb-48 px-4">
       <div id="log" class="screen active mt-4">
-        <div id="team-pills-gameday" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"></div>
         <div id="fixture-card" class="bg-emerald-600/10 border border-emerald-500/20 rounded-2xl p-5 mb-4 hidden">
             <h2 id="match-vs" class="text-xl font-black italic text-emerald-400"></h2>
             <p id="match-details" class="text-sm text-zinc-400 font-bold uppercase"></p>
@@ -79,7 +75,7 @@
             <input id="gameday-search" type="text" autocomplete="off" placeholder="Search Player" oninput="showGamedaySuggestions()" class="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl px-5 py-5 text-xl outline-none focus:border-emerald-500 transition-all shadow-inner"/>
             <div id="gameday-suggestions" class="hidden"></div>
         </div>
-        <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[10px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Upcoming Squad (Unpaid)</p></div>
+        <div id="draft-chips-label" class="mb-2 hidden"><p class="text-[10px] uppercase font-black text-zinc-600 mb-2 tracking-widest">Match Squad (Unpaid)</p></div>
         <div id="draft-chips" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-zinc-900"></div>
         <div id="bulk-payment-list" class="space-y-3"></div>
         <div id="bulk-save-area" class="hidden mt-8">
@@ -88,12 +84,11 @@
             <button id="umpire-toggle" onclick="toggleUmpireFee()" class="w-14 h-7 rounded-full bg-zinc-800 border border-zinc-700 relative transition-colors"><div id="umpire-ball" class="absolute top-1 left-1 w-5 h-5 rounded-full bg-zinc-600 transition-all"></div></button>
           </div>
           <div class="flex justify-between items-center mb-6 px-2"><span class="text-xs font-black uppercase text-zinc-500 italic">Net Take:</span><span id="session-total-display" class="text-3xl font-black text-emerald-500 italic">$0.00</span></div>
-          <button onclick="submitBulkPayments()" class="w-full bg-emerald-600 text-white font-black py-7 rounded-3xl active:scale-95 transition-all uppercase tracking-widest italic text-lg shadow-xl">Save Session</button>
+          <button onclick="submitBulkPayments()" class="w-full bg-emerald-600 text-white font-black py-7 rounded-3xl active:scale-95 transition-all uppercase tracking-widest italic text-lg shadow-xl">Bowl Over & Save</button>
         </div>
       </div>
 
       <div id="players" class="screen mt-4">
-          <div id="team-pills-ledger" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"></div>
           <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 mb-6 shadow-lg border-t-4 border-t-emerald-500">
               <div class="flex justify-between items-center mb-5"><h2 class="font-black uppercase text-[11px] tracking-widest text-emerald-500 italic">Season Audit</h2><div id="team-season-total" class="text-xs font-black text-white bg-zinc-800 px-4 py-2 rounded-full uppercase"></div></div>
               <div class="audit-grid text-[9px] font-black text-zinc-500 uppercase tracking-tighter mb-4 px-1 border-b border-zinc-800 pb-2"><span>Match</span><span>Fees</span><span>Paid</span><span class="text-right">Net</span></div>
@@ -113,10 +108,8 @@
             </div>
             <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg">Update Season Window</button>
         </div>
-        <div class="flex justify-between items-center mb-4 mt-8 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Teams</h2><button onclick="showAddTeamModal()" class="text-emerald-500 text-[11px] font-black uppercase tracking-tighter">+ New Team</button></div>
-        <div id="setup-team-list" class="flex flex-wrap gap-2 mb-8"></div>
         <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-6 mt-12 rounded-3xl shadow-lg">
-            <div class="flex justify-between items-center mb-6"><h2 class="font-bold uppercase text-[11px] tracking-widest text-zinc-500">Master List</h2><button onclick="showAddPlayerModal()" class="text-emerald-500 text-[11px] font-black uppercase tracking-tighter">+ New Player</button></div>
+            <div class="flex justify-between items-center mb-6"><h2 class="font-bold uppercase text-[11px] tracking-widest text-zinc-500">Master List</h2></div>
             <div id="master-players-list" class="space-y-8"></div>
         </div>
       </div>
@@ -129,6 +122,14 @@
         <button id="nav-setup" onclick="switchScreen('teams')" class="flex-1 flex flex-col items-center nav-item"><i class="fa-solid fa-sliders text-2xl mb-1"></i><span>Setup</span></button>
       </div>
     </nav>
+  </div>
+
+  <div id="match-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[9999] backdrop-blur-md">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[400px] mx-4 p-6 flex flex-col max-h-[80vh]">
+      <h3 id="m-modal-title" class="text-xl font-black italic text-emerald-500 uppercase mb-4 text-center"></h3>
+      <div id="m-modal-content" class="flex-1 overflow-y-auto space-y-2 no-scrollbar"></div>
+      <button onclick="hideModal('match-modal')" class="mt-6 py-4 bg-zinc-800 text-zinc-400 rounded-xl font-bold uppercase text-xs">Close</button>
+    </div>
   </div>
 
   <script>
@@ -168,11 +169,7 @@
       toggleLoader(false);
     }
 
-    function logout() { 
-      if(!confirm("Logout?")) return;
-      localStorage.removeItem('cp_user'); 
-      location.reload(); 
-    }
+    function logout() { if(!confirm("Logout?")) return; localStorage.removeItem('cp_user'); location.reload(); }
 
     function loadWithUser(data) {
       players = data.players || []; transactions = data.transactions || []; fixtures = data.fixtures || []; 
@@ -181,13 +178,9 @@
       if (currentUser.role === 'captain') {
         activeTeamId = currentUser.teamId;
         document.getElementById('nav-setup').style.display = 'none';
-        document.getElementById('team-pills-gameday').style.display = 'none';
-        document.getElementById('team-pills-ledger').style.display = 'none';
       } else {
         if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id;
         document.getElementById('nav-setup').style.display = 'flex';
-        document.getElementById('team-pills-gameday').style.display = 'flex';
-        document.getElementById('team-pills-ledger').style.display = 'flex';
       }
       renderAll();
     }
@@ -203,12 +196,7 @@
     }
 
     const saved = localStorage.getItem('cp_user');
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      window.loadData();
-    }
+    if (saved) { currentUser = JSON.parse(saved); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; window.loadData(); }
 
     function isWithinSeason(dateStr) {
       if (!config.SeasonStart || !config.SeasonEnd) return true;
@@ -218,115 +206,70 @@
       return d.getTime() >= start.getTime() && d.getTime() <= end.getTime();
     }
 
-    function findCurrentMatch() { 
-        const card = document.getElementById('fixture-card'); 
-        if(!activeTeamId || fixtures.length === 0 || !card) { if(card) card.classList.add('hidden'); return; } 
-        
-        const now = new Date(); now.setHours(0,0,0,0);
-        // UPDATED: Finds the next match starting from TODAY onwards within the season
-        const upcomingMatches = fixtures.filter(f => {
-            const fD = new Date(f.date); fD.setHours(0,0,0,0);
-            return f.teamId === activeTeamId && isWithinSeason(f.date) && fD.getTime() >= now.getTime();
-        }).sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        if(upcomingMatches.length > 0) { 
-            const m = upcomingMatches[0];
-            activeFixtureId = m.id; 
-            updateUI('match-vs', "vs " + m.opponent); 
-            updateUI('match-details', formatAUDate(m.date)); 
-            card.classList.remove('hidden'); 
-        } else { activeFixtureId = null; card.classList.add('hidden'); } 
-    }
-
-    function toggleUmpireFee() {
-      umpireFeePaid = !umpireFeePaid;
-      const ball = document.getElementById('umpire-ball');
-      const toggle = document.getElementById('umpire-toggle');
-      if(umpireFeePaid) { ball.classList.add('translate-x-7'); ball.classList.replace('bg-zinc-600', 'bg-emerald-500'); toggle.classList.replace('bg-zinc-800', 'bg-emerald-900/30'); } 
-      else { ball.classList.remove('translate-x-7'); ball.classList.replace('bg-emerald-500', 'bg-zinc-600'); toggle.classList.replace('bg-emerald-900/30', 'bg-zinc-800'); }
-      calculateSessionTotal();
-    }
-
-    function calculateSessionTotal() {
-      let total = 0; selectedForPayment.forEach(id => total += (parseFloat(persistentAmounts[id]) || 0));
-      if (umpireFeePaid) total -= 75;
-      document.getElementById('session-total-display').innerText = `$${total.toFixed(2)}`;
-    }
-
-    function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
-    function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
-
-    function renderAll() { 
-      updateUI('active-season-label', config.CurrentSeason || "No Season"); 
-      renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderSetupFixtures(); renderTeamAudit(); renderSetupTeams(); 
-    }
-
-    function renderPlayersList() { 
-      const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; 
-      let filtered = players.filter(p => p.defaultTeam === activeTeamId && `${p.firstName} ${p.lastName}`.toLowerCase().includes(term)); 
-      list.innerHTML = filtered.map(p => { 
-        const bal = getSafeBalance(p.id); 
-        return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all"><div class="flex-1"><div class="font-bold text-zinc-100 text-base">${p.firstName} ${p.lastName}</div></div><div class="text-xl font-black ${bal<0?'text-red-500':'text-emerald-500'} italic">$${bal.toFixed(2)}</div></div>`; 
-      }).join(''); 
-    }
-
-    function getSafeBalance(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid) && isWithinSeason(t.date)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); }
-    
-    function renderTeamAudit() { 
+    function renderTeamAudit() {
       const list = document.getElementById('team-audit-list'); if (!list) return;
       const teamTx = transactions.filter(t => t.teamId === activeTeamId && isWithinSeason(t.date));
       const matchNames = [...new Set(teamTx.filter(t => t.note).map(t => t.note))];
       let seasonTotal = 0;
       list.innerHTML = matchNames.map(mName => {
         const mTx = teamTx.filter(t => t.note === mName);
-        const playerDue = Math.abs(mTx.filter(t => t.type === 'match_fee').reduce((s,t) => s+t.amount, 0));
-        const expense = Math.abs(mTx.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0));
+        const fees = Math.abs(mTx.filter(t => t.type === 'match_fee' || t.type === 'expense').reduce((s,t) => s+t.amount, 0));
         const paid = mTx.filter(t => t.type === 'payment').reduce((s,t) => s+t.amount, 0);
-        const combinedFee = playerDue + expense; const netProfit = paid - expense; seasonTotal += netProfit;
-        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-900 pb-3 text-[11px]"><span>${mName}</span><span class="text-zinc-500">$${combinedFee.toFixed(0)}</span><span class="text-emerald-500">$${paid.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic font-black text-xs">$${netProfit.toFixed(0)}</span></div>`;
+        const netProfit = paid - mTx.filter(t => t.type === 'expense').reduce((s,t) => s+Math.abs(t.amount), 0);
+        seasonTotal += netProfit;
+        return `<div onclick="showMatchSnapshot('${mName}')" class="audit-grid text-zinc-300 font-bold border-b border-zinc-800 pb-3 text-[11px] active:bg-zinc-900"><span>${mName}</span><span class="text-zinc-500">$${fees.toFixed(0)}</span><span class="text-emerald-500">$${paid.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-emerald-400 text-right'} italic font-black text-xs">$${netProfit.toFixed(0)}</span></div>`;
       }).join('');
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET`);
     }
 
-    function renderGamedaySelection() {
-        const chipContainer = document.getElementById('draft-chips');
-        const bulkList = document.getElementById('bulk-payment-list');
-        const saveArea = document.getElementById('bulk-save-area');
-        const label = document.getElementById('draft-chips-label');
-        if (!activeFixtureId) { chipContainer.innerHTML = ''; label.classList.add('hidden'); bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-xs uppercase font-bold italic">No upcoming match</div>`; return; }
-        const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
-        const currentMatch = fixtures.find(f => f.id === activeFixtureId);
-        const unpaidAvailable = players.filter(p => {
-            const hasPaid = transactions.some(t => t.playerId === p.id && t.note === currentMatch.opponent && t.type === 'payment' && isWithinSeason(t.date));
-            return assignedIds.includes(p.id) && !hasPaid && !sessionProcessedIds.includes(p.id);
-        });
-        label.classList.toggle('hidden', unpaidAvailable.length === 0);
-        chipContainer.innerHTML = unpaidAvailable.map(p => { const lastI = p.lastName ? ` ${p.lastName.charAt(0)}.` : ''; return `<button onclick="togglePlayerSelection('${p.id}')" class="px-5 py-4 rounded-2xl text-[11px] font-black uppercase border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-emerald-900/30 text-emerald-400'}">${(p.firstName + lastI).toUpperCase()}</button>`; }).join('');
-        if (selectedForPayment.length > 0) {
-            saveArea.classList.remove('hidden');
-            bulkList.innerHTML = selectedForPayment.map(pid => { const p = players.find(x => x.id === pid); return `<div class="bg-zinc-900 border border-zinc-800 p-5 rounded-3xl shadow-xl flex items-center gap-4 animate-in fade-in zoom-in duration-200"><div class="flex-1"><div class="font-bold text-base text-white">${p.firstName} ${p.lastName}</div><div class="text-[10px] text-zinc-500 uppercase font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div><div class="bg-black/40 px-4 py-3 rounded-xl border border-zinc-800"><input type="number" id="amt-${pid}" inputmode="decimal" placeholder="0" value="${persistentAmounts[pid] || ''}" oninput="captureAmount('${pid}', this.value)" class="w-24 bg-transparent text-2xl font-black text-emerald-500 outline-none text-right" /></div></div>`; }).join('');
-            calculateSessionTotal();
-        } else { saveArea.classList.add('hidden'); bulkList.innerHTML = unpaidAvailable.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[11px] uppercase tracking-widest">Select chips above to enter payments</div>` : (assignedIds.length > 0 ? `<div class="py-12 text-center text-emerald-500/40 text-xs font-black uppercase tracking-widest italic">Squad Payments Clear</div>` : ''); }
+    function showMatchSnapshot(mName) {
+      document.getElementById('m-modal-title').innerText = mName;
+      const teamTx = transactions.filter(t => t.teamId === activeTeamId && t.note === mName && isWithinSeason(t.date));
+      const paidPids = teamTx.filter(t => t.type === 'payment').map(t => t.playerId);
+      const feePids = teamTx.filter(t => t.type === 'match_fee').map(t => t.playerId);
+      const allPids = [...new Set([...paidPids, ...feePids])];
+      
+      let html = allPids.map(pid => {
+          const p = players.find(x => x.id === pid) || {firstName: 'Unknown', lastName: ''};
+          const hasPaid = paidPids.includes(pid);
+          return `<div class="flex justify-between items-center p-3 bg-zinc-800/40 rounded-xl">
+            <span class="text-sm font-bold text-zinc-200">${p.firstName} ${p.lastName}</span>
+            ${hasPaid ? '<span class="text-[10px] font-black text-emerald-500 uppercase">Paid ✓</span>' : '<span class="text-[10px] font-black text-red-500 uppercase">Owing</span>'}
+          </div>`;
+      }).join('');
+      document.getElementById('m-modal-content').innerHTML = html || '<div class="text-center opacity-30 p-10">No match records</div>';
+      document.getElementById('match-modal').classList.remove('hidden');
     }
 
-    async function submitBulkPayments() { 
-      const toPay = [...selectedForPayment]; const amounts = {...persistentAmounts}; const fix = fixtures.find(f => f.id === activeFixtureId);
-      const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: toPay.map(pid => ({ playerId: pid, amount: parseFloat(amounts[pid]) || 0 })), umpireFee: umpireFeePaid };
-      selectedForPayment = []; persistentAmounts = {}; umpireFeePaid = false;
-      try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }); await window.loadData(true); } catch(e) { alert("Failed."); } 
+    function findCurrentMatch() { 
+        const card = document.getElementById('fixture-card'); if(!activeTeamId || fixtures.length === 0 || !card) { if(card) card.classList.add('hidden'); return; } 
+        const now = new Date(); now.setHours(0,0,0,0);
+        const upcoming = fixtures.filter(f => { const fD = new Date(f.date); fD.setHours(0,0,0,0); return f.teamId === activeTeamId && isWithinSeason(f.date) && fD.getTime() >= now.getTime(); }).sort((a,b) => new Date(a.date) - new Date(b.date));
+        if(upcoming.length > 0) { const m = upcoming[0]; activeFixtureId = m.id; updateUI('match-vs', "vs " + m.opponent); updateUI('match-details', formatAUDate(m.date)); card.classList.remove('hidden'); } else { activeFixtureId = null; card.classList.add('hidden'); } 
     }
 
+    function toggleUmpireFee() {
+      umpireFeePaid = !umpireFeePaid;
+      const ball = document.getElementById('umpire-ball'); const toggle = document.getElementById('umpire-toggle');
+      if(umpireFeePaid) { ball.classList.add('translate-x-7'); ball.classList.replace('bg-zinc-600', 'bg-emerald-500'); toggle.classList.replace('bg-zinc-800', 'bg-emerald-900/30'); } 
+      else { ball.classList.remove('translate-x-7'); ball.classList.replace('bg-emerald-500', 'bg-zinc-600'); toggle.classList.replace('bg-emerald-900/30', 'bg-zinc-800'); }
+      calculateSessionTotal();
+    }
+
+    function calculateSessionTotal() { let total = 0; selectedForPayment.forEach(id => total += (parseFloat(persistentAmounts[id]) || 0)); if (umpireFeePaid) total -= 75; document.getElementById('session-total-display').innerText = `$${total.toFixed(2)}`; }
+    function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
+    function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
+    function renderAll() { updateUI('active-season-label', config.CurrentSeason || "No Season"); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderTeamAudit(); }
+    function renderPlayersList() { const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; let filtered = players.filter(p => p.defaultTeam === activeTeamId && `${p.firstName} ${p.lastName}`.toLowerCase().includes(term)); list.innerHTML = filtered.map(p => { const bal = getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all"><div class="flex-1"><div class="font-bold text-zinc-100 text-base">${p.firstName} ${p.lastName}</div></div><div class="text-xl font-black ${bal<0?'text-red-500':'text-emerald-500'} italic">$${bal.toFixed(2)}</div></div>`; }).join(''); }
+    function getSafeBalance(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid) && isWithinSeason(t.date)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); }
+    function renderGamedaySelection() { const chipContainer = document.getElementById('draft-chips'); const bulkList = document.getElementById('bulk-payment-list'); const saveArea = document.getElementById('bulk-save-area'); const label = document.getElementById('draft-chips-label'); if (!activeFixtureId) { chipContainer.innerHTML = ''; label.classList.add('hidden'); bulkList.innerHTML = `<div class="py-10 text-center text-zinc-800 text-xs uppercase font-bold italic">No upcoming match</div>`; return; } const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); const currentMatch = fixtures.find(f => f.id === activeFixtureId); const unpaidAvailable = players.filter(p => { const hasPaid = transactions.some(t => t.playerId === p.id && t.note === currentMatch.opponent && t.type === 'payment' && isWithinSeason(t.date)); return assignedIds.includes(p.id) && !hasPaid && !sessionProcessedIds.includes(p.id); }); label.classList.toggle('hidden', unpaidAvailable.length === 0); chipContainer.innerHTML = unpaidAvailable.map(p => { const lastI = p.lastName ? ` ${p.lastName.charAt(0)}.` : ''; return `<button onclick="togglePlayerSelection('${p.id}')" class="px-5 py-4 rounded-2xl text-[11px] font-black uppercase border transition-all ${selectedForPayment.includes(p.id) ? 'chip-active' : 'bg-zinc-900 border-emerald-900/30 text-emerald-400'}">${(p.firstName + lastI).toUpperCase()}</button>`; }).join(''); if (selectedForPayment.length > 0) { saveArea.classList.remove('hidden'); bulkList.innerHTML = selectedForPayment.map(pid => { const p = players.find(x => x.id === pid); return `<div class="bg-zinc-900 border border-zinc-800 p-5 rounded-3xl shadow-xl flex items-center gap-4 animate-in fade-in zoom-in duration-200"><div class="flex-1"><div class="font-bold text-base text-white">${p.firstName} ${p.lastName}</div><div class="text-[10px] text-zinc-500 uppercase font-black">Bal: $${getSafeBalance(pid).toFixed(2)}</div></div><div class="bg-black/40 px-4 py-3 rounded-xl border border-zinc-800"><input type="number" id="amt-${pid}" inputmode="decimal" placeholder="0" value="${persistentAmounts[pid] || ''}" oninput="captureAmount('${pid}', this.value)" class="w-24 bg-transparent text-2xl font-black text-emerald-500 outline-none text-right" /></div></div>`; }).join(''); calculateSessionTotal(); } else { saveArea.classList.add('hidden'); bulkList.innerHTML = unpaidAvailable.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[11px] uppercase tracking-widest">Select chips above to enter payments</div>` : (assignedIds.length > 0 ? `<div class="py-12 text-center text-emerald-500/40 text-xs font-black uppercase tracking-widest italic">Squad Payments Clear</div>` : ''); } }
+    async function submitBulkPayments() { const toPay = [...selectedForPayment]; const amounts = {...persistentAmounts}; const fix = fixtures.find(f => f.id === activeFixtureId); const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: toPay.map(pid => ({ playerId: pid, amount: parseFloat(amounts[pid]) || 0 })), umpireFee: umpireFeePaid }; selectedForPayment = []; persistentAmounts = {}; umpireFeePaid = false; try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }); await window.loadData(true); } catch(e) { alert("Failed."); } }
     function togglePlayerSelection(pid) { if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } else selectedForPayment.push(pid); renderGamedaySelection(); }
     function captureAmount(pid, val) { persistentAmounts[pid] = val; calculateSessionTotal(); }
-    function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-6 py-3 rounded-full text-xs font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
-    function showGamedaySuggestions() { const input = document.getElementById('gameday-search'); const term = input.value.trim(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !sessionProcessedIds.includes(p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term.toLowerCase())); const rect = input.getBoundingClientRect(); sug.style.top = (rect.bottom + 5) + 'px'; sug.style.left = rect.left + 'px'; sug.style.width = rect.width + 'px'; let html = filtered.map(p => `<div onclick="localDraftRingIn('${p.id}')" class="p-5 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center"><div><div class="font-bold text-base text-zinc-200">${p.firstName} ${p.lastName}</div></div><div class="text-emerald-500 text-sm font-black">+ Add</div></div>`).join(''); if (filtered.length === 0) { html = `<div onclick="quickCreatePlayer('${term}')" class="p-6 active:bg-emerald-900/20 flex flex-col gap-1 border-b border-zinc-800"><div class="text-emerald-500 font-black text-[11px] uppercase tracking-tighter italic mb-1">No match found</div><div class="text-white font-bold text-base">+ Add "${term}"</div></div>`; } sug.innerHTML = html; sug.classList.remove('hidden'); }
-    async function quickCreatePlayer(nameStr) { const parts = nameStr.split(' '); const first = parts[0]; const last = parts.slice(1).join(' ') || 'New'; const pid = 'p' + Date.now(); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: first, lastName: last, isMember: false, defaultTeam: activeTeamId }) }); const curIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); curIds.push(pid); await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: curIds }) }); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); await window.loadData(); } catch(e) { alert("Failed."); } toggleLoader(false); }
+    function showGamedaySuggestions() { const input = document.getElementById('gameday-search'); const term = input.value.trim(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !sessionProcessedIds.includes(p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term.toLowerCase())); const rect = input.getBoundingClientRect(); sug.style.top = (rect.bottom + 5) + 'px'; sug.style.left = rect.left + 'px'; sug.style.width = rect.width + 'px'; let html = filtered.map(p => `<div onclick="localDraftRingIn('${p.id}')" class="p-5 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center"><div><div class="font-bold text-base text-zinc-200">${p.firstName} ${p.lastName}</div></div><div class="text-emerald-500 text-sm font-black">+ Add</div></div>`).join(''); sug.innerHTML = html; sug.classList.remove('hidden'); }
     function localDraftRingIn(pid) { if(!selectedForPayment.includes(pid)) selectedForPayment.push(pid); document.getElementById('gameday-search').value = ''; renderAll(); }
-    function renderSetupTeams() { const list = document.getElementById('setup-team-list'); if(!list) return; list.innerHTML = teams.map(t => `<div class="bg-zinc-900 border border-zinc-800 px-5 py-3 rounded-xl text-xs font-black uppercase text-zinc-300 flex items-center gap-4">${t.name}<button onclick="handleDeleteTeam('${t.id}')" class="text-red-900/60 hover:text-red-500"><i class="fa-solid fa-circle-xmark text-lg"></i></button></div>`).join(''); }
-    function renderSetupFixtures() { const list = document.getElementById('setup-fixture-list'); if(!list) return; let html = ""; teams.forEach(team => { const teamF = fixtures.filter(f => f.teamId === team.id && isWithinSeason(f.date)).sort((a,b) => new Date(a.date)-new Date(b.date)); if(teamF.length > 0) { html += `<div class="team-group-header uppercase">${team.name}</div>`; teamF.forEach(f => { html += `<div class="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 flex justify-between items-center mb-3 shadow-lg"><div><div class="font-bold text-sm text-white">vs ${f.opponent}</div><div class="text-[10px] text-emerald-500 font-black">${formatAUDate(f.date)}</div></div><div class="flex gap-2"><button onclick="openSquadSelector('${f.id}')" class="bg-emerald-600/10 text-emerald-500 text-[10px] font-black px-5 py-3 rounded-xl border border-emerald-900/30 uppercase">Squad</button></div></div>`; }); } }); list.innerHTML = html || `<div class="py-10 text-center text-zinc-700 text-xs font-bold uppercase">No fixtures</div>`; }
     function renderMasterPlayerList() { const list = document.getElementById('master-players-list'); let html = ""; teams.forEach(team => { const teamP = players.filter(p => p.defaultTeam === team.id); if (teamP.length > 0) { html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div></div>`).join('')}</div></div>`; } }); list.innerHTML = html || `<div class="py-10 text-center text-zinc-700 text-xs font-bold uppercase">No players</div>`; }
-    async function handleSeasonUpdate() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; if(!n||!s||!e) return alert("Fill fields"); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { alert("Failed."); } toggleLoader(false); }
-    function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function showHistory(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); const bal = getSafeBalance(pid); let history = [...transactions.filter(t => String(t.playerId) === String(pid) && isWithinSeason(t.date))].reverse(); document.getElementById('history-name').innerText = p.firstName + " " + p.lastName; document.getElementById('history-balance').innerText = "Balance: $" + bal.toFixed(2); const list = document.getElementById('history-list'); list.innerHTML = history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-emerald-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-12 text-center opacity-30 text-xs font-black uppercase tracking-widest">No History</div>`; document.getElementById('history-modal').classList.remove('hidden'); }
     window.onload = function() { if(!localStorage.getItem('cp_user')) document.getElementById('login-screen').style.display = 'flex'; };
   </script>
 </body>
