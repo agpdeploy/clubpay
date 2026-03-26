@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.54</title>
+  <title>🏏 ClubPay v1.55</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -50,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.54</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.55</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -106,8 +106,8 @@
                 <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
                 <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
             </div>
-            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg">Close Current & Start New</button>
-            <p class="text-[7px] text-zinc-500 mt-3 text-center uppercase font-black">This resets the UI view to the new dates. Old matches and balances are hidden but remain in the sheet.</p>
+            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg">Set Season Window</button>
+            <p class="text-[7px] text-zinc-500 mt-3 text-center uppercase font-black">Adjust these dates to control which matches and balances appear in the UI.</p>
         </div>
 
         <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
@@ -189,12 +189,16 @@
     function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
     function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
 
+    // FIXED DATE COMPARISON
     function isWithinSeason(dateStr) {
       if (!config.SeasonStart || !config.SeasonEnd) return true;
-      const d = new Date(dateStr); d.setHours(0,0,0,0);
-      const start = new Date(config.SeasonStart); start.setHours(0,0,0,0);
-      const end = new Date(config.SeasonEnd); end.setHours(23,59,59,999);
-      return d >= start && d <= end;
+      const d = new Date(dateStr);
+      d.setHours(0,0,0,0);
+      const start = new Date(config.SeasonStart);
+      start.setHours(0,0,0,0);
+      const end = new Date(config.SeasonEnd);
+      end.setHours(23,59,59,999);
+      return d.getTime() >= start.getTime() && d.getTime() <= end.getTime();
     }
 
     window.loadData = async function(isSilent = false) {
@@ -296,21 +300,21 @@
     async function handleSeasonUpdate() { 
         const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; 
         if(!n||!s||!e) return alert("Fill all fields"); 
-        if(!confirm(`Close existing view and start ${n}? This hides all data before ${s}.`)) return;
         toggleLoader(true); 
-        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("New Season Started."); } catch(e) { alert("Error"); } toggleLoader(false); 
+        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("New Season Window Set."); } catch(e) { alert("Error"); } toggleLoader(false); 
     }
 
-    async function resetSeasonHard() {
-        const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; 
-        if(!n||!s||!e) return alert("Set new details first.");
-        if(!confirm(`⚠️ IRREVERSIBLE: This wipes ALL data from the Google Sheet. Ready?`)) return;
-        toggleLoader(true);
-        try {
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "resetSeasonHard", newName: n, newStart: s, newEnd: e }) });
-            await window.loadData(); alert("Hard Reset Complete.");
-        } catch(e) { alert("Reset failed."); }
-        toggleLoader(false);
+    // UPDATED RESET LOGIC
+    function resetSeasonHard() {
+      const today = new Date();
+      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+      const endOfYear = new Date(today.getFullYear(), 11, 31);
+      
+      document.getElementById('season-input').value = "New Season " + today.getFullYear();
+      document.getElementById('season-start').value = tomorrow.toISOString().split('T')[0];
+      document.getElementById('season-end').value = endOfYear.toISOString().split('T')[0];
+      
+      alert("I've set the 'Starts' date to tomorrow. Click 'Set Season Window' below to finalize. This will hide all fixtures from today and earlier.");
     }
     
     function showAddFixtureModal() { currentFixtureEditId = null; document.getElementById('fixture-modal-title').innerText = "Schedule Match"; document.getElementById('fixture-team-assign').value = activeTeamId || ""; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; document.getElementById('fixture-location').value = ""; document.getElementById('fixture-danger-zone').classList.add('hidden'); document.getElementById('fixture-modal').classList.remove('hidden'); }
@@ -342,7 +346,10 @@
         const card = document.getElementById('fixture-card'); if(!activeTeamId || fixtures.length === 0 || !card) { if(card) card.classList.add('hidden'); return; } 
         const teamMatches = fixtures.filter(f => f.teamId === activeTeamId && isWithinSeason(f.date)); 
         const now = new Date(); now.setHours(0,0,0,0);
-        const m = teamMatches.find(f => new Date(f.date) >= now); 
+        const m = teamMatches.find(f => {
+          const fDate = new Date(f.date); fDate.setHours(0,0,0,0);
+          return fDate.getTime() >= now.getTime();
+        }); 
         if(m) { activeFixtureId = m.id; updateUI('match-vs', "vs " + m.opponent); updateUI('match-details', formatAUDate(m.date)); card.classList.remove('hidden'); } else { activeFixtureId = null; card.classList.add('hidden'); } 
     }
 
