@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.50</title>
+  <title>🏏 ClubPay v1.51</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -50,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.50</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.51</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -100,18 +100,14 @@
 
       <div id="teams" class="screen mt-4 pb-10">
         <div class="bg-zinc-900 border border-zinc-800 p-5 mb-6 rounded-3xl shadow-lg border-t-4 border-t-emerald-600">
-            <h2 class="font-black mb-4 uppercase text-[10px] tracking-widest text-emerald-500 italic text-center">New Season Setup</h2>
-            <input id="season-input" placeholder="Season Name (e.g. Summer 26/27)" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
-            <div class="flex gap-2 mb-4">
-                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
-                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
-            </div>
-            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest mb-2">Update Dates Only</button>
-            <button onclick="resetSeasonHard()" class="w-full bg-red-900/20 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-red-500 border border-red-900/30">Reset & Clear Transactions</button>
-            <p class="text-[7px] text-zinc-600 mt-2 text-center uppercase font-black">Warning: Reset will delete all current matches and fees for a clean start.</p>
+            <h2 class="font-black mb-4 uppercase text-[10px] tracking-widest text-emerald-500 italic text-center">Season Control</h2>
+            <input id="season-input" placeholder="Season Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
+            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest mb-2">Update Label Only</button>
+            <button onclick="resetSeasonHard()" class="w-full bg-red-900/20 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-red-500 border border-red-900/30">Reset & Clear Data</button>
+            <p class="text-[7px] text-zinc-600 mt-2 text-center uppercase font-black italic">Reset deletes all matches & transactions for a clean slate.</p>
         </div>
 
-        <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures & Management</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
+        <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
         <div id="setup-fixture-list" class="space-y-2"></div>
 
         <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-6 mt-12 rounded-3xl shadow-lg">
@@ -201,29 +197,10 @@
             teams = data.teams || []; fixturesSquad = data.fixturesSquad || []; config = data.config || {};
             if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id;
             renderAll();
-            if(!hasCheckedAutoClose && !isSilent) { hasCheckedAutoClose = true; safeAutoClose(); }
         } catch (e) { 
-            if(!isSilent) alert("Sync failed. Check script deployment permissions (Anyone) and URL."); 
+            if(!isSilent) alert("Sync failed."); 
         }
         if(!isSilent) toggleLoader(false);
-    }
-
-    async function safeAutoClose() {
-        const now = new Date(); now.setHours(0,0,0,0);
-        const toClose = fixtures.filter(f => {
-            const fDate = new Date(f.date); fDate.setHours(0,0,0,0);
-            const squadCount = fixturesSquad.filter(s => s.fixtureId === f.id).length;
-            return fDate < now && squadCount > 0;
-        });
-        if(toClose.length === 0) return;
-        for (const f of toClose) {
-            const squad = fixturesSquad.filter(s => s.fixtureId === f.id).map(s => players.find(p => p.id === s.playerId)).filter(p => p);
-            try {
-                await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "closeMatchFees", teamId: f.teamId, squad: squad, opponent: f.opponent }) });
-                await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: f.id, playerIds: [] }) });
-            } catch(e) {}
-        }
-        window.loadData(true);
     }
 
     function renderSetupFixtures() {
@@ -309,8 +286,6 @@
       populateDropdowns(); 
       if(config.CurrentSeason) { 
         document.getElementById('season-input').value = config.CurrentSeason; 
-        document.getElementById('season-start').value = config.SeasonStart ? config.SeasonStart.split('T')[0] : ""; 
-        document.getElementById('season-end').value = config.SeasonEnd ? config.SeasonEnd.split('T')[0] : ""; 
       } 
     }
 
@@ -327,30 +302,21 @@
     
     async function handleSeasonUpdate() { 
         const n = document.getElementById('season-input').value.trim(); 
-        const s = document.getElementById('season-start').value; 
-        const e = document.getElementById('season-end').value; 
-        if(!n||!s||!e) return alert("Fill all fields"); 
+        if(!n) return alert("Enter season name"); 
         toggleLoader(true); 
-        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("Config Saved."); } catch(e) { alert("Save Error"); } toggleLoader(false); 
+        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n }) }); await window.loadData(); alert("Label Updated."); } catch(e) { alert("Error"); } toggleLoader(false); 
     }
 
     async function resetSeasonHard() {
         const n = document.getElementById('season-input').value.trim(); 
-        const s = document.getElementById('season-start').value; 
-        const e = document.getElementById('season-end').value; 
-        if(!n||!s||!e) return alert("Set new season details first.");
-        if(!confirm(`⚠️ FINAL WARNING: This will permanently DELETE all current transactions and fixtures. Only the player list will remain. Proceed?`)) return;
+        if(!n) return alert("Enter the NEW season name first.");
+        if(!confirm(`⚠️ IRREVERSIBLE: This wipes ALL transactions and fixtures. Ready for ${n}?`)) return;
         
         toggleLoader(true);
         try {
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ 
-                action: "resetSeasonHard", 
-                newName: n, 
-                newStart: s, 
-                newEnd: e
-            }) });
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "resetSeasonHard", newName: n }) });
             await window.loadData();
-            alert("Season Reset Complete.");
+            alert("Hard Reset Successful.");
         } catch(e) { alert("Reset failed."); }
         toggleLoader(false);
     }
