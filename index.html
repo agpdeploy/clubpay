@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.46</title>
+  <title>🏏 ClubPay v1.47</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -20,6 +20,7 @@
     .toggle-active { background: #059669 !important; color: white !important; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
     .save-indicator { position: fixed; bottom: 80px; right: 20px; background: #059669; color: white; padding: 8px 16px; border-radius: 12px; font-size: 10px; font-weight: 900; text-transform: uppercase; display: none; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
     .team-group-header { font-size: 10px; font-weight: 900; letter-spacing: 0.1em; color: #52525b; margin-top: 24px; margin-bottom: 8px; padding-left: 4px; border-left: 3px solid #22c55e; }
+    .squad-group-label { font-size: 9px; font-weight: 900; color: #3f3f46; text-transform: uppercase; letter-spacing: 0.15em; margin: 16px 0 8px 4px; display: flex; items-center: center; gap: 8px; }
   </style>
 
   <script>
@@ -49,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.46</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.47</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -391,17 +392,31 @@
     function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
     function showAddPlayerModal() { currentEditId = null; document.getElementById('modal-title').innerText = "New Profile"; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || ""; document.getElementById('danger-zone').classList.add('hidden'); document.getElementById('player-modal').classList.remove('hidden'); }
     function renderMasterPlayerList() { const list = document.getElementById('master-players-list'); list.innerHTML = players.map(p => `<div class="bg-zinc-800/30 border border-zinc-800 p-3 rounded-xl flex justify-between items-center mb-1"><div class="font-bold text-xs">${p.firstName} ${p.lastName}</div><button onclick="openEditFromSetup('${p.id}')" class="h-8 w-8 bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-400 active:bg-emerald-600 transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`).join(''); }
+    
     function openSquadSelector(fid) { 
         activeFixtureId = fid; 
+        const fix = fixtures.find(f => f.id === fid);
         const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId);
-        const list = document.getElementById('fixture-squad-picker');
-        list.innerHTML = players.map(p => {
-            const checked = currentSquadIds.includes(p.id) ? 'checked' : '';
-            return `<label class="squad-row flex justify-between items-center bg-zinc-800/50 p-4 rounded-2xl border border-zinc-800" data-name="${p.firstName} ${p.lastName}">
+        
+        // Prioritize players based on team assignment
+        const homePlayers = players.filter(p => p.defaultTeam === fix.teamId);
+        const otherPlayers = players.filter(p => p.defaultTeam !== fix.teamId);
+        
+        const generateSquadRow = (p) => {
+          const checked = currentSquadIds.includes(p.id) ? 'checked' : '';
+          return `<label class="squad-row flex justify-between items-center bg-zinc-800/50 p-4 rounded-2xl border border-zinc-800 mb-2" data-name="${p.firstName} ${p.lastName}">
                 <span class="text-sm font-bold">${p.firstName} ${p.lastName}</span>
                 <input type="checkbox" value="${p.id}" ${checked} class="w-6 h-6 rounded-lg accent-emerald-500" />
             </label>`;
-        }).join('');
+        };
+
+        const list = document.getElementById('fixture-squad-picker');
+        list.innerHTML = `
+          <div class="squad-group-label"><i class="fa-solid fa-house-user text-emerald-500"></i> Home Team</div>
+          ${homePlayers.map(generateSquadRow).join('')}
+          <div class="squad-group-label mt-4"><i class="fa-solid fa-users text-zinc-600"></i> Club Players</div>
+          ${otherPlayers.map(generateSquadRow).join('')}
+        `;
         document.getElementById('squad-modal').classList.remove('hidden');
     }
   </script>
