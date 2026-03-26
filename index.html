@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.55</title>
+  <title>🏏 ClubPay v1.56</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -50,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.55</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.56</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -101,14 +101,16 @@
       <div id="teams" class="screen mt-4 pb-10">
         <div class="bg-zinc-900 border border-zinc-800 p-5 mb-6 rounded-3xl shadow-lg border-t-4 border-t-emerald-600">
             <h2 class="font-black mb-4 uppercase text-[10px] tracking-widest text-emerald-500 italic text-center">Season Transition</h2>
-            <input id="season-input" placeholder="New Season Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
+            <input id="season-input" placeholder="Season Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
             <div class="flex gap-2 mb-4">
                 <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
                 <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
             </div>
-            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg">Set Season Window</button>
-            <p class="text-[7px] text-zinc-500 mt-3 text-center uppercase font-black">Adjust these dates to control which matches and balances appear in the UI.</p>
+            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg">Update Season Window</button>
         </div>
+
+        <div class="flex justify-between items-center mb-4 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Team</button></div>
+        <div id="setup-team-list" class="flex flex-wrap gap-2 mb-8"></div>
 
         <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
         <div id="setup-fixture-list" class="space-y-2"></div>
@@ -135,6 +137,14 @@
       <div class="mb-4"><input type="text" id="squad-picker-search" oninput="filterSquadPickerList()" placeholder="Quick filter players..." class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-xs outline-none text-zinc-300"/></div>
       <div id="fixture-squad-picker" class="flex-1 overflow-y-auto space-y-2 no-scrollbar px-1"></div>
       <div class="flex gap-3 mt-6"><button onclick="hideModal('squad-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="saveFixtureSquad()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px]">Confirm</button></div>
+    </div>
+  </div>
+
+  <div id="team-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
+      <h3 class="text-xl font-bold mb-6 italic text-emerald-500 uppercase">Team Details</h3>
+      <input id="team-name-input" placeholder="Team Name (e.g. Ferny C)" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none"/>
+      <div class="flex gap-3 mt-8"><button onclick="hideModal('team-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="saveTeam()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px]">Save Team</button></div>
     </div>
   </div>
 
@@ -189,15 +199,11 @@
     function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
     function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
 
-    // FIXED DATE COMPARISON
     function isWithinSeason(dateStr) {
       if (!config.SeasonStart || !config.SeasonEnd) return true;
-      const d = new Date(dateStr);
-      d.setHours(0,0,0,0);
-      const start = new Date(config.SeasonStart);
-      start.setHours(0,0,0,0);
-      const end = new Date(config.SeasonEnd);
-      end.setHours(23,59,59,999);
+      const d = new Date(dateStr); d.setHours(0,0,0,0);
+      const start = new Date(config.SeasonStart); start.setHours(0,0,0,0);
+      const end = new Date(config.SeasonEnd); end.setHours(23,59,59,999);
       return d.getTime() >= start.getTime() && d.getTime() <= end.getTime();
     }
 
@@ -213,6 +219,17 @@
             renderAll();
         } catch (e) { if(!isSilent) alert("Sync failed."); }
         if(!isSilent) toggleLoader(false);
+    }
+
+    function renderSetupTeams() {
+      const list = document.getElementById('setup-team-list');
+      if(!list) return;
+      list.innerHTML = teams.map(t => `
+        <div class="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl text-[10px] font-black uppercase text-zinc-400 flex items-center gap-3">
+          ${t.name}
+          <button onclick="handleDeleteTeam('${t.id}')" class="text-red-900/40 hover:text-red-500"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+      `).join('');
     }
 
     function renderSetupFixtures() {
@@ -283,7 +300,7 @@
     
     function renderAll() { 
       updateUI('active-season-label', config.CurrentSeason || "No Season Set"); 
-      renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderSetupFixtures(); renderTeamAudit(); populateDropdowns(); 
+      renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderSetupFixtures(); renderTeamAudit(); renderSetupTeams(); populateDropdowns(); 
       if(config.CurrentSeason) { 
         document.getElementById('season-input').value = config.CurrentSeason; 
         document.getElementById('season-start').value = config.SeasonStart ? config.SeasonStart.split('T')[0] : ""; 
@@ -301,20 +318,35 @@
         const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; 
         if(!n||!s||!e) return alert("Fill all fields"); 
         toggleLoader(true); 
-        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("New Season Window Set."); } catch(e) { alert("Error"); } toggleLoader(false); 
+        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("Config Updated."); } catch(e) { alert("Error"); } toggleLoader(false); 
     }
 
-    // UPDATED RESET LOGIC
-    function resetSeasonHard() {
-      const today = new Date();
-      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-      const endOfYear = new Date(today.getFullYear(), 11, 31);
-      
-      document.getElementById('season-input').value = "New Season " + today.getFullYear();
-      document.getElementById('season-start').value = tomorrow.toISOString().split('T')[0];
-      document.getElementById('season-end').value = endOfYear.toISOString().split('T')[0];
-      
-      alert("I've set the 'Starts' date to tomorrow. Click 'Set Season Window' below to finalize. This will hide all fixtures from today and earlier.");
+    function showAddTeamModal() {
+      document.getElementById('team-name-input').value = "";
+      document.getElementById('team-modal').classList.remove('hidden');
+    }
+
+    async function saveTeam() {
+      const name = document.getElementById('team-name-input').value.trim();
+      if(!name) return alert("Team name required.");
+      const id = 't' + Date.now();
+      toggleLoader(true);
+      try {
+        await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id, name }) });
+        hideModal('team-modal');
+        await window.loadData();
+      } catch(e) { alert("Save Error"); }
+      toggleLoader(false);
+    }
+
+    async function handleDeleteTeam(tid) {
+      if(!confirm("Delete this team? Matches and players will not be deleted, but will lose their team link.")) return;
+      toggleLoader(true);
+      try {
+        await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) });
+        await window.loadData();
+      } catch(e) { alert("Delete failed."); }
+      toggleLoader(false);
     }
     
     function showAddFixtureModal() { currentFixtureEditId = null; document.getElementById('fixture-modal-title').innerText = "Schedule Match"; document.getElementById('fixture-team-assign').value = activeTeamId || ""; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; document.getElementById('fixture-location').value = ""; document.getElementById('fixture-danger-zone').classList.add('hidden'); document.getElementById('fixture-modal').classList.remove('hidden'); }
@@ -354,7 +386,7 @@
     }
 
     function showGamedaySuggestions() { const input = document.getElementById('gameday-search'); const term = input.value.trim(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !sessionProcessedIds.includes(p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term.toLowerCase())); const rect = input.getBoundingClientRect(); sug.style.top = (rect.bottom + 5) + 'px'; sug.style.left = rect.left + 'px'; sug.style.width = rect.width + 'px'; let html = filtered.map(p => `<div onclick="localDraftRingIn('${p.id}')" class="p-4 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center transition-all"><div><div class="font-bold text-sm text-zinc-200">${p.firstName} ${p.lastName}</div></div><div class="text-emerald-500 text-xs font-bold">+ Add</div></div>`).join(''); if (filtered.length === 0) { html = `<div onclick="quickCreatePlayer('${term}')" class="p-5 active:bg-emerald-900/20 flex flex-col gap-1 border-b border-zinc-800"><div class="text-emerald-500 font-black text-[10px] uppercase tracking-tighter italic mb-1">No match found</div><div class="text-white font-bold text-sm">+ Add "${term}" as New Player</div></div>`; } sug.innerHTML = html; sug.classList.remove('hidden'); }
-    async function quickCreatePlayer(nameStr) { const parts = nameStr.split(' '); const first = parts[0]; const last = parts.slice(1).join(' ') || 'New'; const pid = 'p' + Date.now(); if(!activeFixtureId) return alert("Select a match first."); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: first, lastName: last, isMember: false, defaultTeam: activeTeamId }) }); const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); currentSquadIds.push(pid); await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: currentSquadIds }) }); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); await window.loadData(); } catch(e) { alert("Quick Add Failed."); } toggleLoader(false); }
+    async function quickCreatePlayer(nameStr) { const parts = nameStr.split(' '); const first = parts[0]; const last = parts.slice(1).join(' ') || 'New'; const pid = 'p' + Date.now(); if(!activeFixtureId) return alert("Select a match first."); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: first, firstName: first, lastName: last, isMember: false, defaultTeam: activeTeamId }) }); const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); currentSquadIds.push(pid); await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: currentSquadIds }) }); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); await window.loadData(); } catch(e) { alert("Quick Add Failed."); } toggleLoader(false); }
     function localDraftRingIn(pid) { if(!selectedForPayment.includes(pid)) selectedForPayment.push(pid); document.getElementById('gameday-search').value = ''; renderAll(); }
     function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
     function showAddPlayerModal() { currentEditId = null; document.getElementById('modal-title').innerText = "New Profile"; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || ""; document.getElementById('danger-zone').classList.add('hidden'); document.getElementById('player-modal').classList.remove('hidden'); }
