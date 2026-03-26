@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏏 ClubPay v1.51</title>
+  <title>🏏 ClubPay v1.52</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -50,7 +50,7 @@
   <div id="login" class="fixed inset-0 bg-black flex items-center justify-center z-[100]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl">
       <div class="text-7xl mb-4 text-emerald-500 font-black italic">CP</div>
-      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.51</h1>
+      <h1 class="text-2xl font-bold mb-6 tracking-tight uppercase italic text-white">ClubPay 1.52</h1>
       <button onclick="tryLogin()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-sm">Enter Dashboard</button>
     </div>
   </div>
@@ -102,9 +102,12 @@
         <div class="bg-zinc-900 border border-zinc-800 p-5 mb-6 rounded-3xl shadow-lg border-t-4 border-t-emerald-600">
             <h2 class="font-black mb-4 uppercase text-[10px] tracking-widest text-emerald-500 italic text-center">Season Control</h2>
             <input id="season-input" placeholder="Season Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 outline-none mb-3 text-white font-bold text-center"/>
-            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest mb-2">Update Label Only</button>
+            <div class="flex gap-2 mb-4">
+                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
+                <div class="flex-1"><label class="text-[8px] uppercase text-zinc-500 block mb-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-xs text-zinc-400"/></div>
+            </div>
+            <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest mb-2">Update Config Only</button>
             <button onclick="resetSeasonHard()" class="w-full bg-red-900/20 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest text-red-500 border border-red-900/30">Reset & Clear Data</button>
-            <p class="text-[7px] text-zinc-600 mt-2 text-center uppercase font-black italic">Reset deletes all matches & transactions for a clean slate.</p>
         </div>
 
         <div class="flex justify-between items-center mb-4"><h2 class="text-[11px] font-black uppercase italic text-zinc-400 tracking-[0.2em]">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-emerald-500 text-[10px] font-black uppercase tracking-tighter">+ New Match</button></div>
@@ -180,7 +183,6 @@
     let activeTeamId = null, activeFixtureId = null, currentEditId = null, currentFixtureEditId = null;
     let selectedForPayment = [], sessionProcessedIds = [], selectedIsMember = false;
     let persistentAmounts = {}; 
-    let hasCheckedAutoClose = false;
 
     function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
     function toggleSyncPill(s) { document.getElementById('save-pill').style.display = s ? 'block' : 'none'; }
@@ -286,6 +288,8 @@
       populateDropdowns(); 
       if(config.CurrentSeason) { 
         document.getElementById('season-input').value = config.CurrentSeason; 
+        document.getElementById('season-start').value = config.SeasonStart ? config.SeasonStart.split('T')[0] : ""; 
+        document.getElementById('season-end').value = config.SeasonEnd ? config.SeasonEnd.split('T')[0] : ""; 
       } 
     }
 
@@ -302,19 +306,23 @@
     
     async function handleSeasonUpdate() { 
         const n = document.getElementById('season-input').value.trim(); 
-        if(!n) return alert("Enter season name"); 
+        const s = document.getElementById('season-start').value; 
+        const e = document.getElementById('season-end').value; 
+        if(!n||!s||!e) return alert("Fill all fields"); 
         toggleLoader(true); 
-        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n }) }); await window.loadData(); alert("Label Updated."); } catch(e) { alert("Error"); } toggleLoader(false); 
+        try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); alert("Config Updated."); } catch(e) { alert("Error"); } toggleLoader(false); 
     }
 
     async function resetSeasonHard() {
         const n = document.getElementById('season-input').value.trim(); 
-        if(!n) return alert("Enter the NEW season name first.");
+        const s = document.getElementById('season-start').value; 
+        const e = document.getElementById('season-end').value; 
+        if(!n||!s||!e) return alert("Set new season details first.");
         if(!confirm(`⚠️ IRREVERSIBLE: This wipes ALL transactions and fixtures. Ready for ${n}?`)) return;
         
         toggleLoader(true);
         try {
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "resetSeasonHard", newName: n }) });
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "resetSeasonHard", newName: n, newStart: s, newEnd: e }) });
             await window.loadData();
             alert("Hard Reset Successful.");
         } catch(e) { alert("Reset failed."); }
@@ -379,9 +387,29 @@
     function populateDropdowns() { const html = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); document.getElementById('player-team-assign').innerHTML = '<option value="">No Team Assigned</option>' + html; document.getElementById('fixture-team-assign').innerHTML = html; }
     async function saveFixtureSquad() { const checks = document.querySelectorAll('#fixture-squad-picker input:checked'); const ids = Array.from(checks).map(c => c.value); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: ids }) }); hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Squad Error"); } toggleLoader(false); }
     function filterSquadPickerList() { const term = document.getElementById('squad-picker-search').value.toLowerCase(); document.querySelectorAll('.squad-row').forEach(row => { const name = row.getAttribute('data-name').toLowerCase(); row.style.display = name.includes(term) ? 'flex' : 'none'; }); }
-    function findCurrentMatch() { const card = document.getElementById('fixture-card'); if(!activeTeamId || fixtures.length === 0 || !card) { if(card) card.classList.add('hidden'); return; } const teamMatches = fixtures.filter(f => f.teamId === activeTeamId); const m = teamMatches.find(f => new Date(f.date) >= new Date(new Date().setHours(0,0,0,0))); if(m) { activeFixtureId = m.id; updateUI('match-vs', "vs " + m.opponent); updateUI('match-details', formatAUDate(m.date)); card.classList.remove('hidden'); } else { activeFixtureId = null; card.classList.add('hidden'); } }
+    
+    function findCurrentMatch() { 
+        const card = document.getElementById('fixture-card'); 
+        if(!activeTeamId || fixtures.length === 0 || !card) { 
+            if(card) card.classList.add('hidden'); 
+            return; 
+        } 
+        const teamMatches = fixtures.filter(f => f.teamId === activeTeamId); 
+        const now = new Date(); now.setHours(0,0,0,0);
+        const m = teamMatches.find(f => new Date(f.date) >= now); 
+        if(m) { 
+            activeFixtureId = m.id; 
+            updateUI('match-vs', "vs " + m.opponent); 
+            updateUI('match-details', formatAUDate(m.date)); 
+            card.classList.remove('hidden'); 
+        } else { 
+            activeFixtureId = null; 
+            card.classList.add('hidden'); 
+        } 
+    }
+
     function showGamedaySuggestions() { const input = document.getElementById('gameday-search'); const term = input.value.trim(); const sug = document.getElementById('gameday-suggestions'); if(!term) { sug.classList.add('hidden'); return; } const filtered = players.filter(p => !sessionProcessedIds.includes(p.id) && (p.firstName + " " + p.lastName).toLowerCase().includes(term.toLowerCase())); const rect = input.getBoundingClientRect(); sug.style.top = (rect.bottom + 5) + 'px'; sug.style.left = rect.left + 'px'; sug.style.width = rect.width + 'px'; let html = filtered.map(p => `<div onclick="localDraftRingIn('${p.id}')" class="p-4 border-b border-zinc-800 active:bg-zinc-800 flex justify-between items-center transition-all"><div><div class="font-bold text-sm text-zinc-200">${p.firstName} ${p.lastName}</div></div><div class="text-emerald-500 text-xs font-bold">+ Add</div></div>`).join(''); if (filtered.length === 0) { html = `<div onclick="quickCreatePlayer('${term}')" class="p-5 active:bg-emerald-900/20 flex flex-col gap-1 border-b border-zinc-800"><div class="text-emerald-500 font-black text-[10px] uppercase tracking-tighter italic mb-1">No match found</div><div class="text-white font-bold text-sm">+ Add "${term}" as New Player</div></div>`; } sug.innerHTML = html; sug.classList.remove('hidden'); }
-    async function quickCreatePlayer(nameStr) { const parts = nameStr.split(' '); const first = parts[0]; const last = parts.slice(1).join(' ') || 'New'; const pid = 'p' + Date.now(); if(!activeFixtureId) return alert("Select a match first."); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: first, lastName: last, isMember: false, defaultTeam: activeTeamId }) }); const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); currentSquadIds.push(pid); await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: currentSquadIds }) }); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); await window.loadData(); } catch(e) { alert("Quick Add Failed."); } toggleLoader(false); }
+    async function quickCreatePlayer(nameStr) { const parts = nameStr.split(' '); const first = parts[0]; const last = parts.slice(1).join(' ') || 'New'; const pid = 'p' + Date.now(); if(!activeFixtureId) return alert("Select a match first."); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: pid, firstName: first, firstName: first, lastName: last, isMember: false, defaultTeam: activeTeamId }) }); const currentSquadIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId); currentSquadIds.push(pid); await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: activeFixtureId, playerIds: currentSquadIds }) }); document.getElementById('gameday-search').value = ''; document.getElementById('gameday-suggestions').classList.add('hidden'); await window.loadData(); } catch(e) { alert("Quick Add Failed."); } toggleLoader(false); }
     function localDraftRingIn(pid) { if(!selectedForPayment.includes(pid)) selectedForPayment.push(pid); document.getElementById('gameday-search').value = ''; renderAll(); }
     function renderTeamPills() { [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(c) c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-5 py-2 rounded-full text-[10px] font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
     function showAddPlayerModal() { currentEditId = null; document.getElementById('modal-title').innerText = "New Profile"; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || ""; document.getElementById('danger-zone').classList.add('hidden'); document.getElementById('player-modal').classList.remove('hidden'); }
