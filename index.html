@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.29 🏏</title>
+  <title>Fees Please v2.30 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -239,7 +239,6 @@
     window.logout = () => { localStorage.removeItem('cp_user'); localStorage.removeItem('cp_config'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
     
-    // NEW: Balance now calculates based on Payments (positive) and Match Fees (negative debts)
     window.getSafeBalance = function(pid) { 
       let tx = transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date)); 
       return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); 
@@ -358,7 +357,7 @@
       populateDropdowns(); 
     }
 
-    // --- NEW: DEBT GENERATOR ---
+    // --- DEBT GENERATOR ---
     window.generateMatchFees = function(fixture) {
         const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10;
         const casRate = parseFloat(config.CasualFee) !== undefined && !isNaN(parseFloat(config.CasualFee)) ? parseFloat(config.CasualFee) : 25;
@@ -366,7 +365,6 @@
         const feesToCharge = [];
         
         squadIds.forEach(pid => {
-            // Check if player has already been billed for this match
             const alreadyCharged = transactions.some(t => String(t.playerId) === String(pid) && t.type === 'match_fee' && t.note.includes(fixture.opponent));
             if (!alreadyCharged) {
                 const p = players.find(x => x.id === pid);
@@ -398,7 +396,6 @@
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
         const currentMatch = fixtures.find(f => f.id === activeFixtureId);
         const unpaidAvailable = players.filter(p => {
-            // Check if they've made an actual payment today (ignore match_fee debts)
             const hasPaid = transactions.some(t => t.playerId === p.id && t.note.includes(currentMatch.opponent) && t.type === 'payment' && window.isWithinSeason(t.date));
             return assignedIds.includes(p.id) && !hasPaid;
         });
@@ -415,7 +412,6 @@
                 const p = players.find(x => x.id === pid); const method = paymentMethods[pid] || 'Cash';
                 const bal = window.getSafeBalance(pid); 
                 const feeDue = p.isMember ? memRate : casRate; 
-                // Suggest total amount to pay: if they are in debt, add today's fee.
                 const totalDue = (bal < 0) ? (Math.abs(bal) + feeDue) : feeDue;
                 if (!persistentAmounts[pid]) persistentAmounts[pid] = totalDue;
                 
@@ -443,13 +439,13 @@
       const feeLbl = config.FeeLabel || "Umpire Fee";
       const baseF = parseFloat(config.BaseFee) || 75;
       
+      // ONLY SAVES PAYMENTS. Debts are generated on Close Match.
       const payload = { 
           action: "saveSessionTake", 
           teamId: activeTeamId, 
           opponent: fix.opponent, 
           matchDate: fix.date, 
           payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), 
-          matchFees: window.generateMatchFees(fix), // Automatically charges players who played
           umpireFee: umpireFeePaid, 
           feeAmount: baseF, 
           feeLabel: feeLbl 
@@ -629,6 +625,7 @@
         const baseF = parseFloat(config.BaseFee) || 75;
         if(!confirm(`Lock vs ${f.opponent} & charge squad?`)) return; 
         
+        // DEBT ENGINE IS NOW EXCLUSIVELY TRIGGERED HERE
         const payload = { 
             action: "saveSessionTake", 
             teamId: f.teamId, 
