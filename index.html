@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.21 🏏</title>
+  <title>Fees Please v2.22 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -29,7 +29,7 @@
 
   <div id="loader" class="loading-overlay">
     <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
-    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Loading Data...</div>
+    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Marvellous effort that...</div>
   </div>
 
   <div id="sync-toast" class="fixed bottom-24 right-4 bg-zinc-900 border border-zinc-800 p-3 pr-5 rounded-2xl shadow-2xl flex items-center gap-4 z-[9000] transition-all duration-300 translate-y-10 opacity-0 pointer-events-none">
@@ -58,8 +58,8 @@
       <div><h1 class="text-2xl font-black italic text-emerald-500 uppercase tracking-tighter">Fees Please</h1><p id="active-season-label" class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest"></p></div>
       <div class="flex items-center gap-3">
         <span id="user-display" class="text-[9px] font-black uppercase text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800"></span>
-        <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900"><i class="fa-solid fa-arrows-rotate"></i></button>
-        <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate"></i></button>
+        <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 active:scale-90 border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </header>
 
@@ -154,7 +154,21 @@
     // --- GLOBALS & UTILS ---
     window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
     window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
-    window.updateLoaderText = (text) => { document.getElementById('loader-text').innerText = text; };
+    
+    // 12TH MAN QUOTES
+    const quotes12thMan = [
+        "Marvellous effort that...",
+        "Got him, yes! Piss off, you're out!",
+        "Choo for choo-chwenty-choo...",
+        "Morning Richie, morning everyone...",
+        "He's throwing bloody watermelons out there!",
+        "That's just simply non-cents...",
+        "Welcome back to the MCG...",
+        "Can't bowl, can't throw..."
+    ];
+    window.getRandomQuote = () => quotes12thMan[Math.floor(Math.random() * quotes12thMan.length)];
+    window.updateLoaderText = (text) => { document.getElementById('loader-text').innerText = text || window.getRandomQuote(); };
+    
     window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
@@ -184,7 +198,7 @@
       const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pin').value.trim();
       if(!u || !p) return alert("Credentials required");
-      window.updateLoaderText("Checking Credentials...");
+      window.updateLoaderText(window.getRandomQuote());
       window.toggleLoader(true);
       try {
         const res = await fetch(DATABASE_URL + "?action=getData");
@@ -208,7 +222,7 @@
     }
 
     window.loadData = async function(isSilent = false) {
-      if(!isSilent) { window.updateLoaderText("Refreshing Data..."); window.toggleLoader(true); }
+      if(!isSilent) { window.updateLoaderText(window.getRandomQuote()); window.toggleLoader(true); }
       try { const res = await fetch(DATABASE_URL + "?action=getData"); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); }
       if(!isSilent) window.toggleLoader(false);
     }
@@ -305,7 +319,7 @@
         selectedForPayment = []; 
         persistentAmounts = {}; 
         paymentMethods = {};
-        if (umpireFeePaid) { window.toggleUmpireFee(); }
+        if (umpireFeePaid) { window.toggleUmpireFee(); } 
         
         await window.loadData(true); 
         renderGamedaySelection();
