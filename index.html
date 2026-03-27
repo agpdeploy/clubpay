@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.17 🏏</title>
+  <title>Fees Please v2.18 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -125,11 +125,14 @@
       <h3 id="squad-title" class="text-xl font-black italic text-emerald-500 uppercase mb-4 text-center">Pick Squad</h3>
       <input id="squad-search" type="text" placeholder="Search player..." oninput="renderSquadPicker()" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4 text-white outline-none focus:border-emerald-500 shadow-inner"/>
       <div id="squad-picker-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
-      <div class="mt-6 flex gap-3"><button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button><button onclick="saveSquad()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Confirm Team</button></div>
+      <div class="mt-6 flex gap-3">
+        <button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button>
+        <button id="confirm-squad-btn" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Confirm Team</button>
+      </div>
     </div>
   </div>
 
-  <div id="fixture-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 id="fixture-modal-title" class="text-xl font-bold mb-6 text-emerald-500 uppercase italic">Match</h3><div class="space-y-4 text-left"><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Assigned Team</label><select id="fixture-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 outline-none shadow-inner"></select><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Opponent</label><input id="fixture-opponent" placeholder="Opponent" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-emerald-500 shadow-inner"/><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Date</label><input id="fixture-date" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-zinc-300 outline-none shadow-inner"/></div><div class="flex gap-3 mt-8"><button onclick="hideModal('fixture-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-xs">Cancel</button><button onclick="saveFixture()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-xs shadow-lg">Save</button></div><div id="fixture-danger-zone" class="mt-4 pt-4 text-center border-t border-zinc-800"><button onclick="handleDeleteFixtureAction()" class="text-red-500 text-[10px] font-black uppercase">Delete Match</button></div></div></div>
+  <div id="fixture-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 id="fixture-modal-title" class="text-xl font-bold mb-6 text-emerald-500 uppercase italic">Match</h3><div class="space-y-4 text-left"><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Assigned Team</label><select id="fixture-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 outline-none shadow-inner"></select><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Opponent</label><input id="fixture-opponent" placeholder="Opponent" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-emerald-500 shadow-inner"/><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Date</label><input id="fixture-date" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-zinc-300 outline-none shadow-inner"/></div><div class="flex gap-3 mt-8"><button onclick="hideModal('fixture-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-xs">Cancel</button><button onclick="saveFixture()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-xs shadow-lg">Save Match</button></div><div id="fixture-danger-zone" class="mt-4 pt-4 text-center border-t border-zinc-800"><button onclick="handleDeleteFixtureAction()" class="text-red-500 text-[10px] font-black uppercase">Delete Match</button></div></div></div>
 
   <div id="player-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 id="modal-title" class="text-xl font-bold mb-6 text-emerald-500 uppercase">Profile</h3><div class="space-y-4"><input id="player-first" placeholder="First Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-emerald-500 shadow-inner"/><input id="player-last" placeholder="Last Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-emerald-500 shadow-inner"/><select id="player-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 outline-none shadow-inner"></select><div class="flex p-1 bg-zinc-800 rounded-xl border border-zinc-700 mt-2 shadow-inner"><button id="btn-member" onclick="setPlayerType(true)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase text-white">Member</button><button id="btn-casual" onclick="setPlayerType(false)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase text-white">Casual</button></div></div><div class="flex gap-3 mt-8"><button onclick="hideModal('player-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="savePlayer()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg">Save</button></div><div id="danger-zone" class="mt-4 pt-4 border-t border-zinc-800 text-center"><button onclick="handleDeleteAction()" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Delete Player</button></div></div></div>
 
@@ -143,9 +146,10 @@
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
 
     // --- GLOBALS & UTILS ---
-    window.toggleLoader = (s) => document.getElementById('loader').style.display = s ? 'flex' : 'none';
-    window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
+    window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
+    window.updateLoaderText = (text) => { document.getElementById('loader-text').innerText = text; };
+    window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
     window.getSafeBalance = function(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); };
@@ -153,18 +157,22 @@
     const formatAUDate = (dStr) => { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
     const updateUI = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
 
-    // --- AUTH & DATA LOGIC ---
+    // --- AUTH & DATA LOADING ---
     window.handleLogin = async function() {
       const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pin').value.trim();
       if(!u || !p) return alert("Credentials required");
+      window.updateLoaderText("Checking Credentials...");
       window.toggleLoader(true);
       try {
         const res = await fetch(DATABASE_URL + "?action=getData");
         const data = await res.json();
         const found = (data.users || []).find(x => String(x.username).toLowerCase() === u && String(x.pin) === p);
-        if (found) { currentUser = found; localStorage.setItem('cp_user', JSON.stringify(found)); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; loadWithUser(data); }
-        else alert("Invalid credentials.");
+        if (found) { 
+          currentUser = found; localStorage.setItem('cp_user', JSON.stringify(found)); 
+          document.getElementById('login-screen').style.display = 'none'; 
+          document.getElementById('app').style.display = 'flex'; loadWithUser(data); 
+        } else { alert("Invalid credentials."); }
       } catch (e) { alert("Sync Error. Please check connection."); console.error(e); }
       window.toggleLoader(false);
     }
@@ -178,7 +186,7 @@
     }
 
     window.loadData = async function(isSilent = false) {
-      if(!isSilent) window.toggleLoader(true);
+      if(!isSilent) { window.updateLoaderText("Refreshing Data..."); window.toggleLoader(true); }
       try { const res = await fetch(DATABASE_URL + "?action=getData"); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); }
       if(!isSilent) window.toggleLoader(false);
     }
@@ -201,8 +209,8 @@
       populateDropdowns(); 
     }
 
-    // --- GAMEDAY RENDERS ---
-    window.findCurrentMatch = function() { 
+    // --- GAMEDAY LOGIC ---
+    function findCurrentMatch() { 
       const card = document.getElementById('fixture-card'); if(!activeTeamId || !card) return;
       const now = new Date(); now.setHours(0,0,0,0);
       
@@ -264,9 +272,28 @@
 
     window.submitBulkPayments = async function() { 
       const fix = fixtures.find(f => f.id === activeFixtureId); 
+      if (!fix) return;
       const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), umpireFee: umpireFeePaid }; 
-      selectedForPayment = []; persistentAmounts = {}; paymentMethods = {}; renderGamedaySelection(); 
-      try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }); await window.loadData(true); } catch(e) { console.error("Payment sync failed", e); } 
+      
+      window.updateLoaderText("Syncing Payments...");
+      window.toggleLoader(true);
+      
+      try { 
+        await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }); 
+        
+        // Reset Local UI State Only After Success
+        selectedForPayment = []; 
+        persistentAmounts = {}; 
+        paymentMethods = {};
+        if (umpireFeePaid) { window.toggleUmpireFee(); } // Visual reset
+        
+        await window.loadData(true); 
+        renderGamedaySelection();
+      } catch(e) { 
+        console.error("Payment sync failed", e); 
+        alert("Failed to save payments. Please check connection and try again.");
+      } 
+      window.toggleLoader(false);
     }
 
     // --- LEDGER RENDERS ---
@@ -379,26 +406,26 @@
       renderSquadPicker(); 
     }
 
-    window.saveSquad = async function() { window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Save failed"); } window.toggleLoader(false); }
+    window.saveSquad = async function() { window.updateLoaderText("Saving Squad..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Save failed"); } window.toggleLoader(false); }
 
     // --- CRUD OPERATIONS ---
-    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; window.toggleLoader(true); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => window.loadData()).catch(console.error).finally(() => window.toggleLoader(false)); }
+    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; window.updateLoaderText("Closing Match..."); window.toggleLoader(true); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => window.loadData()).catch(console.error).finally(() => window.toggleLoader(false)); }
     window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; window.populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
     window.openEditFixture = function(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; window.populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
-    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
-    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.updateLoaderText("Saving Match..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.updateLoaderText("Deleting Match..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
     window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-modal').classList.remove('hidden'); }
     window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || ""; window.setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
-    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.updateLoaderText("Saving Profile..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
     window.setPlayerType = function(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
-    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.updateLoaderText("Deleting Profile..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
     window.showAddTeamModal = function() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
-    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
-    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.updateLoaderText("Creating Team..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.updateLoaderText("Deleting Team..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
-    window.handleSeasonUpdate = async function() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleSeasonUpdate = async function() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; window.updateLoaderText("Updating Config..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
     // --- INIT ---
     const saved = localStorage.getItem('cp_user');
