@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.18 🏏</title>
+  <title>Fees Please v2.19 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -30,6 +30,14 @@
   <div id="loader" class="loading-overlay">
     <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
     <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Loading Data...</div>
+  </div>
+
+  <div id="sync-toast" class="fixed bottom-24 right-4 bg-zinc-900 border border-zinc-800 p-3 pr-5 rounded-2xl shadow-2xl flex items-center gap-4 z-[9000] transition-all duration-300 translate-y-10 opacity-0 pointer-events-none">
+    <i id="toast-icon" class="fa-solid fa-circle-notch fa-spin text-emerald-500 text-xl"></i>
+    <div class="flex flex-col">
+      <span id="toast-title" class="text-[10px] font-black uppercase text-white tracking-widest">Syncing</span>
+      <span id="toast-msg" class="text-[9px] font-bold uppercase text-zinc-500 tracking-wider">Please wait...</span>
+    </div>
   </div>
 
   <div id="login-screen" class="fixed inset-0 bg-black flex items-center justify-center z-[1000]">
@@ -125,10 +133,7 @@
       <h3 id="squad-title" class="text-xl font-black italic text-emerald-500 uppercase mb-4 text-center">Pick Squad</h3>
       <input id="squad-search" type="text" placeholder="Search player..." oninput="renderSquadPicker()" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4 text-white outline-none focus:border-emerald-500 shadow-inner"/>
       <div id="squad-picker-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
-      <div class="mt-6 flex gap-3">
-        <button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button>
-        <button id="confirm-squad-btn" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Confirm Team</button>
-      </div>
+      <div class="mt-6 flex gap-3"><button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button><button id="confirm-squad-btn" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Confirm Team</button></div>
     </div>
   </div>
 
@@ -156,6 +161,22 @@
     
     const formatAUDate = (dStr) => { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
     const updateUI = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+
+    // --- TOAST NOTIFICATIONS (No more full-screen blocks!) ---
+    window.showToast = (title, msg, isSuccess = false) => {
+      const el = document.getElementById('sync-toast');
+      document.getElementById('toast-title').innerText = title;
+      document.getElementById('toast-msg').innerText = msg;
+      const icon = document.getElementById('toast-icon');
+      if (isSuccess) {
+        icon.className = "fa-solid fa-check-circle text-emerald-500 text-xl";
+        setTimeout(() => window.hideToast(), 3000);
+      } else {
+        icon.className = "fa-solid fa-circle-notch fa-spin text-emerald-500 text-xl";
+      }
+      el.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+    };
+    window.hideToast = () => { document.getElementById('sync-toast').classList.add('translate-y-10', 'opacity-0', 'pointer-events-none'); };
 
     // --- AUTH & DATA LOADING ---
     window.handleLogin = async function() {
@@ -275,25 +296,20 @@
       if (!fix) return;
       const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), umpireFee: umpireFeePaid }; 
       
-      window.updateLoaderText("Syncing Payments...");
-      window.toggleLoader(true);
+      window.showToast("Saving", "Processing payments...");
       
       try { 
         await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }); 
-        
-        // Reset Local UI State Only After Success
-        selectedForPayment = []; 
-        persistentAmounts = {}; 
-        paymentMethods = {};
-        if (umpireFeePaid) { window.toggleUmpireFee(); } // Visual reset
-        
+        selectedForPayment = []; persistentAmounts = {}; paymentMethods = {};
+        if (umpireFeePaid) { window.toggleUmpireFee(); } 
         await window.loadData(true); 
         renderGamedaySelection();
+        window.showToast("Success", "Payments saved", true);
       } catch(e) { 
         console.error("Payment sync failed", e); 
-        alert("Failed to save payments. Please check connection and try again.");
+        window.hideToast();
+        alert("Failed to save payments.");
       } 
-      window.toggleLoader(false);
     }
 
     // --- LEDGER RENDERS ---
@@ -406,26 +422,26 @@
       renderSquadPicker(); 
     }
 
-    window.saveSquad = async function() { window.updateLoaderText("Saving Squad..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Save failed"); } window.toggleLoader(false); }
+    window.saveSquad = async function() { window.showToast("Saving", "Updating squad..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(true); window.showToast("Success", "Squad saved", true); } catch(e) { window.hideToast(); alert("Save failed"); } }
 
     // --- CRUD OPERATIONS ---
-    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; window.updateLoaderText("Closing Match..."); window.toggleLoader(true); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => window.loadData()).catch(console.error).finally(() => window.toggleLoader(false)); }
+    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; window.showToast("Locking", "Closing match..."); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => { window.loadData(true); window.showToast("Success", "Match locked", true); }).catch((e) => { window.hideToast(); console.error(e); }); }
     window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; window.populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
     window.openEditFixture = function(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; window.populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
-    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.updateLoaderText("Saving Match..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
-    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.updateLoaderText("Deleting Match..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.showToast("Saving", "Updating match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match saved", true); } catch(e) { window.hideToast(); } }
+    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.showToast("Deleting", "Removing match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match deleted", true); } catch(e) { window.hideToast(); } }
 
     window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-modal').classList.remove('hidden'); }
     window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || ""; window.setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
-    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.updateLoaderText("Saving Profile..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.showToast("Saving", "Updating profile..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Profile saved", true); } catch(e) { window.hideToast(); } }
     window.setPlayerType = function(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
-    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.updateLoaderText("Deleting Profile..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.showToast("Deleting", "Removing player..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Player deleted", true); } catch(e) { window.hideToast(); } }
 
     window.showAddTeamModal = function() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
-    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.updateLoaderText("Creating Team..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
-    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.updateLoaderText("Deleting Team..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
+    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
 
-    window.handleSeasonUpdate = async function() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; window.updateLoaderText("Updating Config..."); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleSeasonUpdate = async function() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; window.showToast("Saving", "Updating config..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(true); window.showToast("Success", "Season updated", true); } catch(e) { window.hideToast(); } }
 
     // --- INIT ---
     const saved = localStorage.getItem('cp_user');
