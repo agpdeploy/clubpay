@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.20 🏏</title>
+  <title>Fees Please v2.21 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -58,8 +58,8 @@
       <div><h1 class="text-2xl font-black italic text-emerald-500 uppercase tracking-tighter">Fees Please</h1><p id="active-season-label" class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest"></p></div>
       <div class="flex items-center gap-3">
         <span id="user-display" class="text-[9px] font-black uppercase text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800"></span>
-        <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate"></i></button>
-        <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 active:scale-90 border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <button onclick="window.loadData()" class="text-emerald-500 w-10 h-10 rounded-full bg-zinc-900"><i class="fa-solid fa-arrows-rotate"></i></button>
+        <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </header>
 
@@ -393,16 +393,25 @@
 
     window.renderMasterPlayerList = function() { 
       const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; 
+      
+      // Render players assigned to specific teams
       teams.forEach(team => { 
         const teamP = players.filter(p => p.defaultTeam === team.id); 
         if(teamP.length > 0) {
           html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-emerald-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
         }
       }); 
+
+      // Render unassigned / casual players
+      const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam));
+      if(unassignedP.length > 0) {
+          html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-emerald-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
+      }
+
       list.innerHTML = html; 
     }
 
-    window.populateDropdowns = function() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = teamHtml; }
+    window.populateDropdowns = function() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = '<option value="-">Unassigned</option>' + teamHtml; }
 
     // --- SQUAD PICKER ---
     window.openSquadPicker = function(fid) { 
@@ -423,7 +432,7 @@
       sorted.forEach(p => {
         if (!`${p.firstName} ${p.lastName}`.toLowerCase().includes(term)) return;
         const pri = p.defaultTeam === f.teamId;
-        if (!pri && !rS) { html += `<div class="picker-section-label">Club Members</div>`; rS = true; }
+        if (!pri && !rS) { html += `<div class="picker-section-label">Club Members & Casuals</div>`; rS = true; }
         else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; }
         const chk = localSquadSelection.includes(p.id);
         
@@ -450,8 +459,8 @@
     window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.showToast("Saving", "Updating match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match saved", true); } catch(e) { window.hideToast(); } }
     window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.showToast("Deleting", "Removing match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match deleted", true); } catch(e) { window.hideToast(); } }
 
-    window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-modal').classList.remove('hidden'); }
-    window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || ""; window.setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
+    window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || "-"; window.setPlayerType(false); document.getElementById('player-modal').classList.remove('hidden'); }
+    window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || "-"; window.setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
     window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.showToast("Saving", "Updating profile..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Profile saved", true); } catch(e) { window.hideToast(); } }
     window.setPlayerType = function(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
     window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.showToast("Deleting", "Removing player..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Player deleted", true); } catch(e) { window.hideToast(); } }
