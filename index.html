@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.26 🏏</title>
+  <title>Fees Please v2.27 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
     tailwind.config = {
       theme: {
@@ -20,7 +21,6 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
     
@@ -122,7 +122,10 @@
                 
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Season Settings</label>
-                    <input id="config-season-name" placeholder="Season Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 outline-none mb-3 text-white font-bold shadow-inner"/>
+                    <div class="mb-3">
+                        <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Season Name</label>
+                        <input id="config-season-name" placeholder="e.g. Winter 2026" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/>
+                    </div>
                     <div class="flex gap-2">
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Starts</label><input id="config-season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Ends</label><input id="config-season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
@@ -477,6 +480,7 @@
     window.renderMasterPlayerList = function() { 
       const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; 
       
+      // Render players assigned to specific teams
       teams.forEach(team => { 
         const teamP = players.filter(p => p.defaultTeam === team.id); 
         if(teamP.length > 0) {
@@ -484,10 +488,12 @@
         }
       }); 
 
+      // Render unassigned / casual players
       const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam));
       if(unassignedP.length > 0) {
           html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
       }
+
       list.innerHTML = html; 
     }
 
@@ -575,6 +581,25 @@
     window.showAddTeamModal = function() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
     window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
     window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
+
+    window.handleSeasonUpdate = async function() { 
+        const n = document.getElementById('config-season-name').value.trim(); 
+        const s = document.getElementById('config-season-start').value; 
+        const e = document.getElementById('config-season-end').value; 
+        const feeLbl = document.getElementById('config-fee-label').value.trim();
+        const baseF = document.getElementById('config-base-fee').value;
+        const memF = document.getElementById('config-member-fee').value;
+        const casF = document.getElementById('config-casual-fee').value;
+        const tColor = document.getElementById('config-theme-color').value;
+        const fFam = document.getElementById('config-font-family').value.trim();
+        
+        window.showToast("Saving", "Updating config..."); 
+        try { 
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, themeColor: tColor, fontFamily: fFam }) }); 
+            await window.loadData(true); 
+            window.showToast("Success", "Configuration updated", true); 
+        } catch(e) { window.hideToast(); alert("Update failed"); } 
+    }
 
     // --- INIT ---
     const saved = localStorage.getItem('cp_user');
