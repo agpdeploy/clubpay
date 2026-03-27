@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.22 🏏</title>
+  <title>Fees Please v2.23 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -128,12 +128,15 @@
 
   <div id="squad-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] backdrop-blur-md">
     <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[440px] mx-4 p-6 flex flex-col max-h-[90vh]">
-      <h3 id="squad-title" class="text-xl font-black italic text-emerald-500 uppercase mb-4 text-center">Pick Squad</h3>
+      <div class="flex justify-between items-center mb-4">
+          <h3 id="squad-title" class="text-xl font-black italic text-emerald-500 uppercase">Pick Squad</h3>
+          <button onclick="hideModal('squad-modal')" class="text-zinc-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
       <input id="squad-search" type="text" placeholder="Search player..." oninput="renderSquadPicker()" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4 text-white outline-none focus:border-emerald-500 shadow-inner"/>
       <div id="squad-picker-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
       <div class="mt-6 flex gap-3">
         <button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button>
-        <button id="confirm-squad-btn" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Confirm Team</button>
+        <button id="confirm-squad-btn" onclick="saveSquad()" class="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Update Squad</button>
       </div>
     </div>
   </div>
