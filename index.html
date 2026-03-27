@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.28 🏏</title>
+  <title>Fees Please v2.29 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -222,14 +222,13 @@
     window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
     window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
     
-    // --- THEME ENGINE ---
+    // THEME ENGINE
     const THEMES = {
         cricket: { icon: "fa-microphone-lines", quotes: ["Marvellous effort that...", "Got him, yes! Piss off, you're out!", "Choo for choo-chwenty-choo...", "Morning Richie, morning everyone...", "He's throwing bloody watermelons out there!", "That's just simply non-cents...", "Welcome back to the MCG...", "Can't bowl, can't throw..."] },
         rugby: { icon: "fa-football", quotes: ["He's gone straight through 'em!", "That is absolute magic!", "Welcome to Friday Night Footy...", "Giving 110%...", "He stepped him!", "Try time!", "Sending it upstairs..."] },
         bluey: { icon: "fa-paw", quotes: ["Wackadoo!", "For real life?", "Gotta be done!", "Cheese and crackers!", "Ah, biscuits!", "How very dare you!", "This is trifficult...", "Hooray!"] },
         standard: { icon: "fa-stopwatch", quotes: ["Warming up...", "Lacing up boots...", "Reviewing the playbook...", "Checking the VAR...", "Stretching...", "Getting in the zone..."] }
     };
-    
     window.getRandomQuote = () => { const q = THEMES[currentThemeKey].quotes; return q[Math.floor(Math.random() * q.length)]; };
     window.updateLoaderText = (text) => { 
         document.getElementById('loader-text').innerText = text || window.getRandomQuote(); 
@@ -239,7 +238,12 @@
     window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.logout = () => { localStorage.removeItem('cp_user'); localStorage.removeItem('cp_config'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
-    window.getSafeBalance = function(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); };
+    
+    // NEW: Balance now calculates based on Payments (positive) and Match Fees (negative debts)
+    window.getSafeBalance = function(pid) { 
+      let tx = transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date)); 
+      return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); 
+    };
     
     const formatAUDate = (dStr) => { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
     const updateUI = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
@@ -354,6 +358,24 @@
       populateDropdowns(); 
     }
 
+    // --- NEW: DEBT GENERATOR ---
+    window.generateMatchFees = function(fixture) {
+        const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10;
+        const casRate = parseFloat(config.CasualFee) !== undefined && !isNaN(parseFloat(config.CasualFee)) ? parseFloat(config.CasualFee) : 25;
+        const squadIds = fixturesSquad.filter(s => s.fixtureId === fixture.id).map(s => s.playerId);
+        const feesToCharge = [];
+        
+        squadIds.forEach(pid => {
+            // Check if player has already been billed for this match
+            const alreadyCharged = transactions.some(t => String(t.playerId) === String(pid) && t.type === 'match_fee' && t.note.includes(fixture.opponent));
+            if (!alreadyCharged) {
+                const p = players.find(x => x.id === pid);
+                if (p) { feesToCharge.push({ playerId: pid, amount: p.isMember ? memRate : casRate, formattedNote: `Match Fee - ${fixture.opponent}` }); }
+            }
+        });
+        return feesToCharge;
+    };
+
     // --- GAMEDAY LOGIC ---
     function findCurrentMatch() { 
       const card = document.getElementById('fixture-card'); if(!activeTeamId || !card) return;
@@ -376,6 +398,7 @@
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
         const currentMatch = fixtures.find(f => f.id === activeFixtureId);
         const unpaidAvailable = players.filter(p => {
+            // Check if they've made an actual payment today (ignore match_fee debts)
             const hasPaid = transactions.some(t => t.playerId === p.id && t.note.includes(currentMatch.opponent) && t.type === 'payment' && window.isWithinSeason(t.date));
             return assignedIds.includes(p.id) && !hasPaid;
         });
@@ -392,6 +415,7 @@
                 const p = players.find(x => x.id === pid); const method = paymentMethods[pid] || 'Cash';
                 const bal = window.getSafeBalance(pid); 
                 const feeDue = p.isMember ? memRate : casRate; 
+                // Suggest total amount to pay: if they are in debt, add today's fee.
                 const totalDue = (bal < 0) ? (Math.abs(bal) + feeDue) : feeDue;
                 if (!persistentAmounts[pid]) persistentAmounts[pid] = totalDue;
                 
@@ -419,7 +443,17 @@
       const feeLbl = config.FeeLabel || "Umpire Fee";
       const baseF = parseFloat(config.BaseFee) || 75;
       
-      const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), umpireFee: umpireFeePaid, feeAmount: baseF, feeLabel: feeLbl }; 
+      const payload = { 
+          action: "saveSessionTake", 
+          teamId: activeTeamId, 
+          opponent: fix.opponent, 
+          matchDate: fix.date, 
+          payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), 
+          matchFees: window.generateMatchFees(fix), // Automatically charges players who played
+          umpireFee: umpireFeePaid, 
+          feeAmount: baseF, 
+          feeLabel: feeLbl 
+      }; 
       
       window.showToast("Saving", "Processing payments...");
       
@@ -452,11 +486,14 @@
           const parts = t.note.split(' - ');
           const typeLabel = parts[0].trim();
           const opp = parts.length > 1 ? parts[1].trim() : t.note;
+          
           if (!grouped[opp]) grouped[opp] = { cash: 0, card: 0, fee: 0 };
+          
           if (t.type === 'expense' || typeLabel === feeLbl) { grouped[opp].fee += Math.abs(t.amount); } 
+          else if (t.type === 'match_fee') { /* DO NOTHING: Keeps player debts out of team cash tallies */ }
           else if (typeLabel === 'Cash') { grouped[opp].cash += parseFloat(t.amount); } 
           else if (typeLabel === 'Card') { grouped[opp].card += parseFloat(t.amount); } 
-          else { grouped[opp].cash += parseFloat(t.amount); } 
+          else if (t.type === 'payment') { grouped[opp].cash += parseFloat(t.amount); } 
       });
 
       let seasonTotal = 0; 
@@ -476,7 +513,7 @@
       document.getElementById('history-name').innerText = p.firstName + " " + p.lastName; 
       document.getElementById('history-balance').innerText = "Balance: $" + bal.toFixed(2); 
       const list = document.getElementById('history-list'); 
-      list.innerHTML = history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-12 text-center opacity-30 text-xs font-black uppercase">No History</div>`; 
+      list.innerHTML = history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : t.type}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-12 text-center opacity-30 text-xs font-black uppercase">No History</div>`; 
       document.getElementById('history-modal').classList.remove('hidden'); 
     }
 
@@ -590,9 +627,22 @@
         const f = fixtures.find(x => x.id === fid); 
         const feeLbl = config.FeeLabel || "Umpire Fee";
         const baseF = parseFloat(config.BaseFee) || 75;
-        if(!confirm(`Lock vs ${f.opponent} & log $${baseF} ${feeLbl}?`)) return; 
+        if(!confirm(`Lock vs ${f.opponent} & charge squad?`)) return; 
+        
+        const payload = { 
+            action: "saveSessionTake", 
+            teamId: f.teamId, 
+            opponent: f.opponent, 
+            matchDate: f.date, 
+            payments: [], 
+            matchFees: window.generateMatchFees(f),
+            umpireFee: true, 
+            feeAmount: baseF, 
+            feeLabel: feeLbl 
+        };
+
         window.showToast("Locking", "Closing match..."); 
-        fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true, feeAmount: baseF, feeLabel: feeLbl }) }).then(() => { window.loadData(true); window.showToast("Success", "Match locked", true); }).catch((e) => { window.hideToast(); console.error(e); }); 
+        fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }).then(() => { window.loadData(true); window.showToast("Success", "Match locked", true); }).catch((e) => { window.hideToast(); console.error(e); }); 
     }
 
     window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; window.populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
