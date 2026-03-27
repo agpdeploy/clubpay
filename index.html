@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.15 🏏</title>
+  <title>Fees Please v2.16 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -20,25 +20,16 @@
     nav { z-index: 100 !important; }
     .pay-btn.cash-active { background: #065f46; color: white; }
     .pay-btn.card-active { background: #1e40af; color: white; }
-    .squad-row { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: #18181b; border-radius: 1rem; margin-bottom: 0.5rem; border: 1px solid #27272a; }
-    .squad-row input[type="checkbox"] { width: 1.6rem; height: 1.6rem; accent-color: #22c55e; cursor: pointer; }
+    .squad-check { transition: all 0.2s ease; border: 1px solid transparent; cursor: pointer; }
+    .squad-check.selected { border-color: #22c55e; background: #064e3b; color: white; }
     .picker-section-label { font-size: 10px; font-weight: 900; color: #3f3f46; text-transform: uppercase; letter-spacing: 0.1em; margin: 15px 0 8px 5px; }
   </style>
-  <script>
-    function switchScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active');
-    }
-    function hideModal(id) { document.getElementById(id).classList.add('hidden'); }
-  </script>
 </head>
 <body>
 
   <div id="loader" class="loading-overlay">
     <div class="animate-bounce text-5xl text-emerald-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
-    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Loading Data...</div>
+    <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-emerald-500 italic text-center px-10 leading-relaxed">Fixing the Pavilion...</div>
   </div>
 
   <div id="login-screen" class="fixed inset-0 bg-black flex items-center justify-center z-[1000]">
@@ -103,7 +94,7 @@
                     <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Starts</label><input id="season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
                     <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Ends</label><input id="season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
                 </div>
-                <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Update Season</button>
+                <button onclick="handleSeasonUpdate()" class="w-full bg-emerald-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg">Update Season</button>
             </div>
             
             <div class="flex justify-between items-center mb-4 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-emerald-500 text-[11px] font-black uppercase tracking-widest">+ New Team</button></div>
@@ -122,9 +113,9 @@
 
     <nav class="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-black/95 backdrop-blur-md pb-8 pt-4">
       <div id="nav-bar" class="flex text-[11px] max-w-[480px] mx-auto font-black uppercase">
-        <button onclick="switchScreen('log')" class="flex-1 flex flex-col items-center nav-item active"><i class="fa-solid fa-bolt-lightning text-2xl mb-1"></i><span>GameDay</span></button>
-        <button onclick="switchScreen('players')" class="flex-1 flex flex-col items-center nav-item"><i class="fa-solid fa-wallet text-2xl mb-1"></i><span>Ledger</span></button>
-        <button id="nav-setup" onclick="switchScreen('teams')" class="flex-1 flex flex-col items-center nav-item"><i class="fa-solid fa-sliders text-2xl mb-1"></i><span>Setup</span></button>
+        <button onclick="switchScreen('log')" class="flex-1 nav-item active"><i class="fa-solid fa-bolt-lightning text-2xl mb-1"></i><br>GameDay</button>
+        <button onclick="switchScreen('players')" class="flex-1 nav-item"><i class="fa-solid fa-wallet text-2xl mb-1"></i><br>Ledger</button>
+        <button id="nav-setup" onclick="switchScreen('teams')" class="flex-1 nav-item"><i class="fa-solid fa-sliders text-2xl mb-1"></i><br>Setup</button>
       </div>
     </nav>
   </div>
@@ -152,30 +143,33 @@
   <script>
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
     
-    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentFixtureEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
+    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false;
 
     // --- UTILITIES ---
-    function toggleLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
-    function formatAUDate(dStr) { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); }
-    function updateUI(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
-    function logout() { localStorage.removeItem('cp_user'); location.reload(); }
-    function getSafeBalance(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); }
-    function isWithinSeason(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); }
+    window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
+    window.toggleLoader = (s) => document.getElementById('loader').style.display = s ? 'flex' : 'none';
+    window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
+    window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
+    const formatAUDate = (dStr) => { if(!dStr) return "N/A"; const d = new Date(dStr); return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }); };
+    const updateUI = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
 
     // --- AUTH & DATA LOADING ---
-    async function handleLogin() {
+    window.handleLogin = async function() {
       const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pin').value.trim();
       if(!u || !p) return alert("Credentials required");
-      toggleLoader(true);
+      window.toggleLoader(true);
       try {
         const res = await fetch(DATABASE_URL + "?action=getData");
         const data = await res.json();
         const found = (data.users || []).find(x => String(x.username).toLowerCase() === u && String(x.pin) === p);
-        if (found) { currentUser = found; localStorage.setItem('cp_user', JSON.stringify(found)); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; loadWithUser(data); }
-        else alert("Invalid credentials.");
+        if (found) { 
+          currentUser = found; localStorage.setItem('cp_user', JSON.stringify(found)); 
+          document.getElementById('login-screen').style.display = 'none'; 
+          document.getElementById('app').style.display = 'flex'; loadWithUser(data); 
+        } else { alert("Invalid credentials."); }
       } catch (e) { alert("Sync Error. Please check connection."); console.error(e); }
-      toggleLoader(false);
+      window.toggleLoader(false);
     }
 
     function loadWithUser(data) {
@@ -187,9 +181,9 @@
     }
 
     window.loadData = async function(isSilent = false) {
-      if(!isSilent) toggleLoader(true);
+      if(!isSilent) window.toggleLoader(true);
       try { const res = await fetch(DATABASE_URL + "?action=getData"); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); }
-      if(!isSilent) toggleLoader(false);
+      if(!isSilent) window.toggleLoader(false);
     }
 
     function renderAll() { 
@@ -210,24 +204,34 @@
       populateDropdowns(); 
     }
 
-    // --- GAMEDAY LOGIC ---
+    // --- GAMEDAY LOGIC (RESTORED TO "NEXT UPCOMING" MATCH) ---
     function findCurrentMatch() { 
       const card = document.getElementById('fixture-card'); if(!activeTeamId || !card) return;
-      const todayStr = new Date().toLocaleDateString('en-CA'); 
-      const matchToday = fixtures.find(f => {
-          if (!f.date) return false;
-          const fDateStr = new Date(f.date).toLocaleDateString('en-CA');
-          return f.teamId === activeTeamId && fDateStr === todayStr;
-      });
-      if(matchToday) { activeFixtureId = matchToday.id; updateUI('match-vs', "vs " + matchToday.opponent); updateUI('match-details', "Today (" + formatAUDate(matchToday.date) + ")"); card.classList.remove('hidden'); } 
-      else { activeFixtureId = null; card.classList.add('hidden'); }
+      const now = new Date(); now.setHours(0,0,0,0);
+      
+      const upcoming = fixtures.filter(f => {
+          if(!f.date) return false;
+          const fD = new Date(f.date); fD.setHours(0,0,0,0);
+          return f.teamId === activeTeamId && fD.getTime() >= now.getTime();
+      }).sort((a,b) => new Date(a.date) - new Date(b.date));
+      
+      if(upcoming.length > 0) { 
+        const m = upcoming[0];
+        activeFixtureId = m.id; 
+        updateUI('match-vs', "vs " + m.opponent); 
+        updateUI('match-details', formatAUDate(m.date)); 
+        card.classList.remove('hidden'); 
+      } else { 
+        activeFixtureId = null; 
+        card.classList.add('hidden'); 
+      }
     }
 
-    function renderGamedaySelection() {
+    window.renderGamedaySelection = function() {
         const chipContainer = document.getElementById('draft-chips');
         const bulkList = document.getElementById('bulk-payment-list');
         const saveArea = document.getElementById('bulk-save-area');
-        if (!activeFixtureId) { chipContainer.innerHTML = ''; bulkList.innerHTML = `<div class="py-12 text-center text-zinc-800 text-xs font-bold uppercase italic opacity-30">NO MATCH TODAY</div>`; saveArea.classList.add('hidden'); return; }
+        if (!activeFixtureId) { chipContainer.innerHTML = ''; bulkList.innerHTML = `<div class="py-12 text-center text-zinc-800 text-xs font-bold uppercase italic opacity-30">NO MATCH SCHEDULED</div>`; saveArea.classList.add('hidden'); return; }
         
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
         const currentMatch = fixtures.find(f => f.id === activeFixtureId);
@@ -255,13 +259,13 @@
         } else { saveArea.classList.add('hidden'); bulkList.innerHTML = unpaidAvailable.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[11px] uppercase tracking-widest">Select players above to collect</div>` : `<div class="py-12 text-center text-emerald-500/40 text-xs uppercase italic">Squad Payments Complete</div>`; }
     }
 
-    function toggleUmpireFee() { umpireFeePaid = !umpireFeePaid; const ball = document.getElementById('umpire-ball'); if(umpireFeePaid) { ball.classList.add('translate-x-7'); ball.classList.replace('bg-zinc-600', 'bg-emerald-500'); } else { ball.classList.remove('translate-x-7'); ball.classList.replace('bg-emerald-500', 'bg-zinc-600'); } calculateSessionTotal(); }
+    window.toggleUmpireFee = function() { umpireFeePaid = !umpireFeePaid; const ball = document.getElementById('umpire-ball'); if(umpireFeePaid) { ball.classList.add('translate-x-7'); ball.classList.replace('bg-zinc-600', 'bg-emerald-500'); } else { ball.classList.remove('translate-x-7'); ball.classList.replace('bg-emerald-500', 'bg-zinc-600'); } calculateSessionTotal(); }
     function calculateSessionTotal() { let total = 0; selectedForPayment.forEach(id => total += (parseFloat(persistentAmounts[id]) || 0)); if (umpireFeePaid) total -= 75; updateUI('session-total-display', `$${total.toFixed(2)}`); }
-    function togglePlayerSelection(pid) { if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } else { selectedForPayment.push(pid); paymentMethods[pid] = 'Cash'; } renderGamedaySelection(); calculateSessionTotal(); }
-    function captureAmount(pid, val) { persistentAmounts[pid] = val; calculateSessionTotal(); }
-    function setPaymentMethod(pid, method) { paymentMethods[pid] = method; renderGamedaySelection(); }
+    window.togglePlayerSelection = function(pid) { if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } else { selectedForPayment.push(pid); paymentMethods[pid] = 'Cash'; } renderGamedaySelection(); calculateSessionTotal(); }
+    window.captureAmount = function(pid, val) { persistentAmounts[pid] = val; calculateSessionTotal(); }
+    window.setPaymentMethod = function(pid, method) { paymentMethods[pid] = method; renderGamedaySelection(); }
 
-    async function submitBulkPayments() { 
+    window.submitBulkPayments = async function() { 
       const fix = fixtures.find(f => f.id === activeFixtureId); 
       const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: selectedForPayment.map(pid => ({ playerId: pid, amount: parseFloat(persistentAmounts[pid]) || 0, formattedNote: `${paymentMethods[pid] || 'Cash'} - ${fix.opponent}` })), umpireFee: umpireFeePaid }; 
       selectedForPayment = []; persistentAmounts = {}; paymentMethods = {}; renderGamedaySelection(); 
@@ -269,7 +273,7 @@
     }
 
     // --- LEDGER LOGIC ---
-    function renderPlayersList() { 
+    window.renderPlayersList = function() { 
       const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; 
       let filtered = players.filter(p => {
           const teamMatch = (currentUser.role === 'admin') ? (p.defaultTeam === activeTeamId) : (p.defaultTeam === currentUser.teamId);
@@ -294,7 +298,7 @@
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET`); 
     }
 
-    function showHistory(pid) { 
+    window.showHistory = function(pid) { 
       currentEditId = pid; const p = players.find(x => x.id === pid); const bal = getSafeBalance(pid); 
       let history = [...transactions.filter(t => String(t.playerId) === String(pid))].reverse(); 
       document.getElementById('history-name').innerText = p.firstName + " " + p.lastName; 
@@ -313,8 +317,7 @@
       const list = document.getElementById('setup-fixture-list'); if(!list) return; let html = ""; 
       teams.forEach(team => { 
         const teamF = fixtures.filter(f => f.teamId === team.id);
-        html += `<div class="team-group-header uppercase">${team.name}</div>`; 
-        if(teamF.length === 0) html += `<div class="p-4 opacity-20 text-[10px] uppercase font-bold">No matches</div>`;
+        html += `<div class="team-group-header">${team.name}</div>`; 
         teamF.forEach(f => {
             const isClosed = transactions.some(t => t.note.includes(f.opponent) && t.type === 'expense' && String(t.teamId) === String(f.teamId));
             html += `<div class="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 mb-3 flex justify-between items-center shadow-lg">
@@ -335,7 +338,7 @@
       teams.forEach(team => { 
         const teamP = players.filter(p => p.defaultTeam === team.id); 
         if(teamP.length > 0) {
-          html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-emerald-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
+          html += `<div class="mb-6"><div class="team-group-header !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-md"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-emerald-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
         }
       }); 
       list.innerHTML = html; 
@@ -343,9 +346,18 @@
 
     function populateDropdowns() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = teamHtml; }
 
-    // --- SQUAD PICKER ---
-    function openSquadPicker(fid) { currentSquadFixtureId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('squad-title').innerText = "Squad: " + f.opponent; document.getElementById('squad-search').value = ""; localSquadSelection = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); renderSquadPicker(); document.getElementById('squad-modal').classList.remove('hidden'); }
-    function renderSquadPicker() {
+    // --- SQUAD PICKER (RESTORED TO ORIGINAL UI) ---
+    window.openSquadPicker = function(fid) { 
+      currentSquadFixtureId = fid; const f = fixtures.find(x => x.id === fid); 
+      document.getElementById('squad-title').innerText = "Squad: " + f.opponent; 
+      document.getElementById('squad-search').value = ""; 
+      localSquadSelection = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); 
+      renderSquadPicker(); 
+      document.getElementById('confirm-squad-btn').onclick = saveSquad; 
+      document.getElementById('squad-modal').classList.remove('hidden'); 
+    }
+
+    window.renderSquadPicker = function() {
       const term = document.getElementById('squad-search').value.toLowerCase();
       const f = fixtures.find(x => x.id === currentSquadFixtureId);
       const list = document.getElementById('squad-picker-list');
@@ -357,31 +369,42 @@
         if (!pri && !rS) { html += `<div class="picker-section-label">Club Members</div>`; rS = true; }
         else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; }
         const chk = localSquadSelection.includes(p.id);
-        html += `<div class="squad-row"><div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName}</div></div><input type="checkbox" onchange="toggleLocalSquad('${p.id}', this.checked)" ${chk ? 'checked' : ''}></div>`;
+        
+        // RESTORED UI!
+        html += `<div onclick="toggleLocalSquad('${p.id}')" class="squad-check p-4 bg-zinc-800/40 rounded-2xl flex justify-between items-center mb-1 ${chk?'selected':''}">
+            <div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName}</div></div>
+            <i class="fa-solid ${chk?'fa-check-circle text-white':'fa-circle-plus opacity-20 text-white'} text-lg transition-all"></i>
+        </div>`;
       });
       list.innerHTML = html;
     }
-    function toggleLocalSquad(pid, isChecked) { if (isChecked) { if(!localSquadSelection.includes(pid)) localSquadSelection.push(pid); } else { localSquadSelection = localSquadSelection.filter(id => id !== pid); } }
-    async function saveSquad() { toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Save failed"); } toggleLoader(false); }
+
+    window.toggleLocalSquad = function(pid) { 
+      if (localSquadSelection.includes(pid)) { localSquadSelection = localSquadSelection.filter(id => id !== pid); } 
+      else { localSquadSelection.push(pid); }
+      renderSquadPicker(); // Instantly update UI
+    }
+
+    async function saveSquad() { window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); hideModal('squad-modal'); await window.loadData(); } catch(e) { alert("Save failed"); } window.toggleLoader(false); }
 
     // --- CRUD OPERATIONS ---
-    function handleCloseGame(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; toggleLoader(true); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => window.loadData()).catch(console.error).finally(() => toggleLoader(false)); }
-    function showAddFixtureModal() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
-    function openEditFixture(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
-    async function saveFixture() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { } toggleLoader(false); }
-    async function handleDeleteFixtureAction() { if (!currentFixtureEditId || !confirm("Delete match?")) return; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { } toggleLoader(false); }
+    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); if(!confirm(`Lock vs ${f.opponent} & log venue fee?`)) return; window.toggleLoader(true); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], umpireFee: true }) }).then(() => window.loadData()).catch(console.error).finally(() => window.toggleLoader(false)); }
+    window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
+    window.openEditFixture = function(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
+    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); hideModal('fixture-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
-    function showAddPlayerModal() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-modal').classList.remove('hidden'); }
-    function openEditFromSetup(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || ""; setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
-    async function savePlayer() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); hideModal('player-modal'); await window.loadData(); } catch(e) { } toggleLoader(false); }
-    function setPlayerType(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
-    async function handleDeleteAction() { if (!currentEditId || !confirm("Delete player?")) return; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); hideModal('player-modal'); await window.loadData(); } catch(e) { } toggleLoader(false); }
+    window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-modal').classList.remove('hidden'); }
+    window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || ""; setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
+    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.setPlayerType = function(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-emerald-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
+    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); hideModal('player-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
-    function showAddTeamModal() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
-    async function saveTeam() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); hideModal('team-modal'); await window.loadData(); } catch(e) { } toggleLoader(false); }
-    async function handleDeleteTeam(tid) { if(!confirm("Delete team?")) return; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(); } catch(e) { } toggleLoader(false); }
+    window.showAddTeamModal = function() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
+    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); hideModal('team-modal'); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
+    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
-    async function handleSeasonUpdate() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { } toggleLoader(false); }
+    window.handleSeasonUpdate = async function() { const n = document.getElementById('season-input').value.trim(); const s = document.getElementById('season-start').value; const e = document.getElementById('season-end').value; window.toggleLoader(true); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e }) }); await window.loadData(); } catch(e) { } window.toggleLoader(false); }
 
     // --- INIT ---
     const saved = localStorage.getItem('cp_user');
