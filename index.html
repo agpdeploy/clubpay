@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.30 🏏</title>
+  <title>Fees Please v2.31 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -87,10 +87,13 @@
     <main class="flex-1 overflow-y-auto pb-48 px-4">
       <div id="log" class="screen active mt-4">
         <div id="team-pills-gameday" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"></div>
-        <div id="fixture-card" class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-5 mb-4 hidden">
-            <h2 id="match-vs" class="text-xl font-black italic text-brand-400"></h2>
+        
+        <div id="fixture-card" class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-5 mb-4 hidden relative">
+            <button onclick="openSquadPicker(activeFixtureId)" class="absolute top-1/2 -translate-y-1/2 right-5 h-10 w-10 bg-brand-600/20 text-brand-500 rounded-xl flex items-center justify-center border border-brand-600/30 shadow-inner active:scale-95 transition-all"><i class="fa-solid fa-user-pen"></i></button>
+            <h2 id="match-vs" class="text-xl font-black italic text-brand-400 pr-12"></h2>
             <p id="match-details" class="text-sm text-zinc-400 font-bold uppercase"></p>
         </div>
+
         <div id="draft-chips" class="flex flex-wrap gap-2 mb-6 pb-6 border-b border-zinc-900"></div>
         <div id="bulk-payment-list" class="space-y-4"></div>
         <div id="bulk-save-area" class="hidden mt-8">
@@ -396,6 +399,7 @@
         const assignedIds = fixturesSquad.filter(s => s.fixtureId === activeFixtureId).map(s => s.playerId);
         const currentMatch = fixtures.find(f => f.id === activeFixtureId);
         const unpaidAvailable = players.filter(p => {
+            // Check if they've made an actual payment today (ignore match_fee debts)
             const hasPaid = transactions.some(t => t.playerId === p.id && t.note.includes(currentMatch.opponent) && t.type === 'payment' && window.isWithinSeason(t.date));
             return assignedIds.includes(p.id) && !hasPaid;
         });
@@ -412,6 +416,7 @@
                 const p = players.find(x => x.id === pid); const method = paymentMethods[pid] || 'Cash';
                 const bal = window.getSafeBalance(pid); 
                 const feeDue = p.isMember ? memRate : casRate; 
+                // Suggest total amount to pay: if they are in debt, add today's fee.
                 const totalDue = (bal < 0) ? (Math.abs(bal) + feeDue) : feeDue;
                 if (!persistentAmounts[pid]) persistentAmounts[pid] = totalDue;
                 
