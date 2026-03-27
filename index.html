@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.27 🏏</title>
+  <title>Fees Please v2.28 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -49,7 +49,7 @@
 <body>
 
   <div id="loader" class="loading-overlay">
-    <div class="animate-bounce text-5xl text-brand-500 mb-6"><i class="fa-solid fa-microphone-lines"></i></div>
+    <div class="animate-bounce text-5xl text-brand-500 mb-6"><i id="loader-icon" class="fa-solid fa-microphone-lines"></i></div>
     <div id="loader-text" class="text-[13px] font-black uppercase tracking-[0.15em] text-brand-500 italic text-center px-10 leading-relaxed">Loading Data...</div>
   </div>
 
@@ -145,10 +145,21 @@
                 </div>
 
                 <div class="mb-6">
-                    <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance</label>
-                    <div class="flex gap-2">
+                    <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance & Theme</label>
+                    <div class="flex gap-2 mb-3">
                         <div class="flex-[2]"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Google Font</label><input id="config-font-family" placeholder="Inter" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Theme Color</label><input id="config-theme-color" type="color" value="#10b981" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl h-[46px] p-1 cursor-pointer shadow-inner"/></div>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <div class="flex-1">
+                            <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Loading Screen Theme</label>
+                            <select id="config-app-theme" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner">
+                                <option value="cricket">12th Man (Cricket)</option>
+                                <option value="rugby">Rugby League</option>
+                                <option value="bluey">Bluey</option>
+                                <option value="standard">Standard Sports</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -205,17 +216,28 @@
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
     
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
+    let currentThemeKey = "cricket";
 
     // --- GLOBALS & UTILS ---
     window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
     window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
     
-    const quotes12thMan = ["Marvellous effort that...", "Got him, yes! Piss off, you're out!", "Choo for choo-chwenty-choo...", "Morning Richie, morning everyone...", "He's throwing bloody watermelons out there!", "That's just simply non-cents...", "Welcome back to the MCG...", "Can't bowl, can't throw..."];
-    window.getRandomQuote = () => quotes12thMan[Math.floor(Math.random() * quotes12thMan.length)];
-    window.updateLoaderText = (text) => { document.getElementById('loader-text').innerText = text || window.getRandomQuote(); };
+    // --- THEME ENGINE ---
+    const THEMES = {
+        cricket: { icon: "fa-microphone-lines", quotes: ["Marvellous effort that...", "Got him, yes! Piss off, you're out!", "Choo for choo-chwenty-choo...", "Morning Richie, morning everyone...", "He's throwing bloody watermelons out there!", "That's just simply non-cents...", "Welcome back to the MCG...", "Can't bowl, can't throw..."] },
+        rugby: { icon: "fa-football", quotes: ["He's gone straight through 'em!", "That is absolute magic!", "Welcome to Friday Night Footy...", "Giving 110%...", "He stepped him!", "Try time!", "Sending it upstairs..."] },
+        bluey: { icon: "fa-paw", quotes: ["Wackadoo!", "For real life?", "Gotta be done!", "Cheese and crackers!", "Ah, biscuits!", "How very dare you!", "This is trifficult...", "Hooray!"] },
+        standard: { icon: "fa-stopwatch", quotes: ["Warming up...", "Lacing up boots...", "Reviewing the playbook...", "Checking the VAR...", "Stretching...", "Getting in the zone..."] }
+    };
+    
+    window.getRandomQuote = () => { const q = THEMES[currentThemeKey].quotes; return q[Math.floor(Math.random() * q.length)]; };
+    window.updateLoaderText = (text) => { 
+        document.getElementById('loader-text').innerText = text || window.getRandomQuote(); 
+        document.getElementById('loader-icon').className = `fa-solid ${THEMES[currentThemeKey].icon}`;
+    };
     
     window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
-    window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
+    window.logout = () => { localStorage.removeItem('cp_user'); localStorage.removeItem('cp_config'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
     window.getSafeBalance = function(pid) { let tx = transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date)); return tx.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0); };
     
@@ -270,7 +292,7 @@
       const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pin').value.trim();
       if(!u || !p) return alert("Credentials required");
-      window.updateLoaderText(window.getRandomQuote());
+      window.updateLoaderText();
       window.toggleLoader(true);
       try {
         const res = await fetch(DATABASE_URL + "?action=getData");
@@ -284,6 +306,10 @@
 
     function loadWithUser(data) {
       players = data.players || []; transactions = data.transactions || []; fixtures = data.fixtures || []; teams = data.teams || []; fixturesSquad = data.fixturesSquad || []; config = data.config || {};
+      
+      currentThemeKey = config.AppTheme || "cricket";
+      localStorage.setItem('cp_config', JSON.stringify(config));
+      
       window.applyWhiteLabel();
       document.getElementById('user-display').innerText = currentUser.username;
       if (currentUser.role === 'captain') { activeTeamId = currentUser.teamId; document.getElementById('nav-setup').style.display = 'none'; } 
@@ -292,7 +318,7 @@
     }
 
     window.loadData = async function(isSilent = false) {
-      if(!isSilent) { window.updateLoaderText(window.getRandomQuote()); window.toggleLoader(true); }
+      if(!isSilent) { window.updateLoaderText(); window.toggleLoader(true); }
       try { const res = await fetch(DATABASE_URL + "?action=getData"); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); }
       if(!isSilent) window.toggleLoader(false);
     }
@@ -310,6 +336,7 @@
           document.getElementById('config-casual-fee').value = config.CasualFee || 25;
           document.getElementById('config-theme-color').value = config.ThemeColor || "#10b981";
           document.getElementById('config-font-family').value = config.FontFamily || "Inter";
+          document.getElementById('config-app-theme').value = config.AppTheme || "cricket";
       }
       
       const gamedayLabel = config.FeeLabel || "Umpire Fee";
@@ -549,10 +576,11 @@
         const casF = document.getElementById('config-casual-fee').value;
         const tColor = document.getElementById('config-theme-color').value;
         const fFam = document.getElementById('config-font-family').value.trim();
+        const aTheme = document.getElementById('config-app-theme').value;
         
         window.showToast("Saving", "Updating config..."); 
         try { 
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, themeColor: tColor, fontFamily: fFam }) }); 
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, themeColor: tColor, fontFamily: fFam, appTheme: aTheme }) }); 
             await window.loadData(true); 
             window.showToast("Success", "Configuration updated", true); 
         } catch(e) { window.hideToast(); alert("Update failed"); } 
@@ -582,26 +610,15 @@
     window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
     window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
 
-    window.handleSeasonUpdate = async function() { 
-        const n = document.getElementById('config-season-name').value.trim(); 
-        const s = document.getElementById('config-season-start').value; 
-        const e = document.getElementById('config-season-end').value; 
-        const feeLbl = document.getElementById('config-fee-label').value.trim();
-        const baseF = document.getElementById('config-base-fee').value;
-        const memF = document.getElementById('config-member-fee').value;
-        const casF = document.getElementById('config-casual-fee').value;
-        const tColor = document.getElementById('config-theme-color').value;
-        const fFam = document.getElementById('config-font-family').value.trim();
-        
-        window.showToast("Saving", "Updating config..."); 
-        try { 
-            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, themeColor: tColor, fontFamily: fFam }) }); 
-            await window.loadData(true); 
-            window.showToast("Success", "Configuration updated", true); 
-        } catch(e) { window.hideToast(); alert("Update failed"); } 
+    // --- INIT ---
+    const savedConfigStr = localStorage.getItem('cp_config');
+    if (savedConfigStr) {
+        config = JSON.parse(savedConfigStr);
+        currentThemeKey = config.AppTheme || "cricket";
+        window.applyWhiteLabel();
+        window.updateLoaderText();
     }
 
-    // --- INIT ---
     const saved = localStorage.getItem('cp_user');
     if (saved) { currentUser = JSON.parse(saved); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; window.loadData(); }
     else { document.getElementById('login-screen').style.display = 'flex'; }
