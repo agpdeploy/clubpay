@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.33 🏏</title>
+  <title>Fees Please v2.34 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -61,8 +61,8 @@
     </div>
   </div>
 
-  <div id="login-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-[1000]">
-    <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden">
+  <div id="login-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
+    <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
       
       <div id="login-brand-area" class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
           <div id="login-logo-fallback" class="text-7xl mb-3 text-brand-500 font-black italic">FP</div>
@@ -239,7 +239,7 @@
     };
     
     window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
-    window.logout = () => { localStorage.removeItem('cp_user'); localStorage.removeItem('cp_config'); location.reload(); };
+    window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
     
     window.getSafeBalance = function(pid) { 
@@ -581,6 +581,7 @@
     window.renderMasterPlayerList = function() { 
       const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; 
       
+      // Render players assigned to specific teams
       teams.forEach(team => { 
         const teamP = players.filter(p => p.defaultTeam === team.id); 
         if(teamP.length > 0) {
@@ -588,6 +589,7 @@
         }
       }); 
 
+      // Render unassigned / casual players
       const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam));
       if(unassignedP.length > 0) {
           html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
@@ -715,7 +717,7 @@
     }
     else { 
         document.getElementById('login-screen').style.display = 'flex'; 
-        if (!savedConfigStr) { fetchConfigSilent(); } // Fetch branding instantly if on a new device
+        if (!savedConfigStr) { fetchConfigSilent(); } 
     }
   </script>
 </body>
