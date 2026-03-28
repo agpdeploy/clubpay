@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.37 🏏</title>
+  <title>Fees Please v2.38 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -225,7 +225,7 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.37</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.38</p>
           <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">The ultimate match day ledger. <br/>No more chasing transfers, no more spreadsheets in the rain.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
@@ -343,7 +343,6 @@
     };
     window.hideToast = () => { document.getElementById('sync-toast').classList.add('translate-y-10', 'opacity-0', 'pointer-events-none'); };
 
-    // --- REBUILT ERROR HANDLER & NO RACE CONDITION ---
     window.handleLogin = async function() {
       const u = document.getElementById('login-user').value.trim().toLowerCase();
       const p = document.getElementById('login-pin').value.trim();
@@ -387,7 +386,8 @@
       currentThemeKey = config.AppTheme || "cricket";
       localStorage.setItem('cp_config', JSON.stringify(config));
       window.applyWhiteLabel();
-      document.getElementById('user-display').innerText = currentUser.username;
+      
+      // FIXED: Only inject into the side menu now that the header badge is gone!
       document.getElementById('menu-user-display').innerText = currentUser.username;
       
       if (currentUser.role === 'captain') { 
