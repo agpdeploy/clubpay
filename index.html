@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.34 🏏</title>
+  <title>Fees Please v2.35 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -63,21 +63,17 @@
 
   <div id="login-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
-      
       <div id="login-brand-area" class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
           <div id="login-logo-fallback" class="text-7xl mb-3 text-brand-500 font-black italic">FP</div>
           <img id="login-logo-img" src="" class="h-20 w-auto mb-3 hidden object-contain" alt="Club Logo" />
           <h1 id="login-title" class="text-2xl font-bold italic text-white uppercase tracking-tight">Fees Please</h1>
       </div>
-
       <div class="space-y-3 mb-6 relative z-10">
         <input id="login-user" type="text" placeholder="Username" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 transition-colors"/>
         <input id="login-pin" type="password" inputmode="numeric" placeholder="••••" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 text-center tracking-[0.5em] transition-colors"/>
       </div>
-      
       <button onclick="handleLogin()" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all relative z-10">Sign In</button>
       <button onclick="localStorage.clear(); location.reload();" class="mt-4 text-zinc-600 text-[10px] uppercase font-bold tracking-widest relative z-10">Wipe Cache & Retry</button>
-
       <div class="mt-8 pt-6 border-t border-zinc-800/50 flex flex-col items-center">
           <span class="text-[8px] uppercase text-zinc-600 font-bold tracking-[0.2em]">Powered by</span>
           <span class="text-[10px] uppercase text-brand-500 font-black italic tracking-widest mt-1">Fees Please</span>
@@ -85,14 +81,40 @@
     </div>
   </div>
 
-  <div id="app" style="display:none;" class="flex-col min-h-screen mx-auto max-w-[480px] bg-zinc-950 shadow-2xl">
+  <div id="app" style="display:none;" class="flex-col min-h-screen mx-auto max-w-[480px] bg-zinc-950 shadow-2xl relative">
+    
+    <div id="side-menu-overlay" class="hidden fixed inset-0 bg-black/60 z-[3000] backdrop-blur-sm transition-opacity" onclick="toggleMenu()"></div>
+    <div id="side-menu" class="fixed top-0 right-0 bottom-0 w-64 bg-zinc-900 border-l border-zinc-800 z-[3001] translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-6 border-b border-zinc-800 flex justify-between items-center bg-black/20">
+            <div>
+                <div class="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1">Logged In As</div>
+                <div id="menu-user-display" class="text-sm font-bold text-brand-500"></div>
+            </div>
+            <button onclick="toggleMenu()" class="text-zinc-500 active:scale-90 transition-transform"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <button id="menu-setup-btn" onclick="switchScreen('teams'); toggleMenu();" class="w-full flex items-center p-4 rounded-2xl hover:bg-zinc-800/50 active:bg-zinc-800 transition-colors group">
+                <div class="w-8 flex justify-center"><i class="fa-solid fa-sliders text-zinc-500 group-hover:text-brand-500 transition-colors text-lg"></i></div>
+                <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">Admin Setup</span>
+            </button>
+            <button onclick="showAbout(); toggleMenu();" class="w-full flex items-center p-4 rounded-2xl hover:bg-zinc-800/50 active:bg-zinc-800 transition-colors group">
+                <div class="w-8 flex justify-center"><i class="fa-solid fa-circle-info text-zinc-500 group-hover:text-brand-500 transition-colors text-lg"></i></div>
+                <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">About App</span>
+            </button>
+            <div class="my-4 border-t border-zinc-800/50 mx-2"></div>
+            <button onclick="window.loadData(); toggleMenu();" class="w-full flex items-center p-4 rounded-2xl hover:bg-zinc-800/50 active:bg-zinc-800 transition-colors group">
+                <div class="w-8 flex justify-center"><i class="fa-solid fa-cloud-arrow-down text-zinc-500 group-hover:text-brand-500 transition-colors text-lg"></i></div>
+                <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">Force Sync</span>
+            </button>
+        </div>
+        <div class="p-6 border-t border-zinc-800 bg-black/20">
+            <button onclick="logout()" class="w-full py-4 bg-red-950/20 text-red-500 font-black text-[11px] uppercase tracking-widest rounded-xl border border-red-900/20 shadow-md active:scale-95 transition-all"><i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out</button>
+        </div>
+    </div>
+
     <header class="sticky top-0 p-4 border-b border-zinc-800 flex justify-between items-center bg-black/80 backdrop-blur-md z-40">
       <div><h1 id="header-title" class="text-xl font-black italic text-brand-500 uppercase tracking-tighter truncate max-w-[200px]">Fees Please</h1><p id="active-season-label" class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest"></p></div>
-      <div class="flex items-center gap-3">
-        <span id="user-display" class="text-[9px] font-black uppercase text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800"></span>
-        <button onclick="window.loadData()" class="text-brand-500 w-10 h-10 rounded-full bg-zinc-900 active:rotate-180 transition-transform"><i class="fa-solid fa-arrows-rotate"></i></button>
-        <button onclick="logout()" class="text-red-900/60 w-10 h-10 rounded-full bg-zinc-900 active:scale-90 border border-red-950/20"><i class="fa-solid fa-right-from-bracket"></i></button>
-      </div>
+      <button onclick="toggleMenu()" class="text-brand-500 w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 active:scale-95 transition-transform flex items-center justify-center shadow-inner"><i class="fa-solid fa-bars text-lg"></i></button>
     </header>
 
     <main class="flex-1 overflow-y-auto pb-48 px-4">
@@ -128,10 +150,8 @@
 
       <div id="teams" class="screen mt-4 pb-10">
         <div id="setup-content">
-            
             <div class="bg-zinc-900 border border-zinc-800 p-6 mb-8 rounded-3xl shadow-lg border-t-4 border-t-brand-600">
                 <h2 class="font-black mb-6 uppercase text-[11px] tracking-widest text-brand-500 italic text-center">Global Configuration</h2>
-                
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Branding</label>
                     <div class="flex gap-2 mb-3">
@@ -139,7 +159,6 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Logo URL (Optional)</label><input id="config-club-logo" placeholder="https://..." class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
                     </div>
                 </div>
-
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Season Settings</label>
                     <div class="mb-3">
@@ -151,7 +170,6 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Ends</label><input id="config-season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
                     </div>
                 </div>
-
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Match Financials</label>
                     <div class="flex gap-2 mb-3">
@@ -163,7 +181,6 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Casual ($)</label><input id="config-casual-fee" type="number" placeholder="25" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                     </div>
                 </div>
-
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance & Theme</label>
                     <div class="flex gap-2 mb-3">
@@ -182,7 +199,6 @@
                         </div>
                     </div>
                 </div>
-
                 <button onclick="handleConfigUpdate()" class="w-full bg-brand-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Save Configuration</button>
             </div>
             
@@ -204,9 +220,18 @@
       <div id="nav-bar" class="flex text-[11px] max-w-[480px] mx-auto font-black uppercase text-zinc-500">
         <button onclick="switchScreen('log')" class="flex-1 flex flex-col items-center nav-item active"><i class="fa-solid fa-bolt-lightning text-2xl mb-1"></i><span>GameDay</span></button>
         <button onclick="switchScreen('players')" class="flex-1 flex flex-col items-center nav-item"><i class="fa-solid fa-wallet text-2xl mb-1"></i><span>Ledger</span></button>
-        <button id="nav-setup" onclick="switchScreen('teams')" class="flex-1 flex flex-col items-center nav-item"><i class="fa-solid fa-sliders text-2xl mb-1"></i><span>Setup</span></button>
       </div>
     </nav>
+  </div>
+
+  <div id="about-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[4000] backdrop-blur-sm">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
+          <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
+          <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.35</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">The ultimate match day ledger. <br/>No more chasing transfers, no more spreadsheets in the rain.</p>
+          <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
+      </div>
   </div>
 
   <div id="squad-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] backdrop-blur-md"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[440px] mx-4 p-6 flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4"><h3 id="squad-title" class="text-xl font-black italic text-brand-500 uppercase">Pick Squad</h3><button onclick="hideModal('squad-modal')" class="text-zinc-500"><i class="fa-solid fa-xmark text-xl"></i></button></div><input id="squad-search" type="text" placeholder="Search player..." oninput="renderSquadPicker()" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 mb-4 text-white outline-none focus:border-brand-500 shadow-inner"/><div id="squad-picker-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div><div class="mt-6 flex gap-3"><button onclick="hideModal('squad-modal')" class="flex-1 py-4 bg-zinc-800 text-zinc-500 rounded-xl font-bold uppercase text-xs">Cancel</button><button id="confirm-squad-btn" onclick="saveSquad()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-black uppercase text-xs shadow-lg">Update Squad</button></div></div></div>
@@ -222,10 +247,30 @@
     let currentThemeKey = "cricket";
 
     // --- GLOBALS & UTILS ---
-    window.switchScreen = (id) => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`button[onclick*="${id}"]`); if(btn) btn.classList.add('active'); };
+    window.switchScreen = (id) => { 
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+        document.getElementById(id).classList.add('active'); 
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); 
+        const btn = document.querySelector(`button[onclick*="${id}"]`); 
+        if(btn) btn.classList.add('active'); 
+    };
+    
+    window.toggleMenu = function() {
+        const overlay = document.getElementById('side-menu-overlay');
+        const menu = document.getElementById('side-menu');
+        if (overlay.classList.contains('hidden')) {
+            overlay.classList.remove('hidden');
+            setTimeout(() => menu.classList.remove('translate-x-full'), 10);
+        } else {
+            menu.classList.add('translate-x-full');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+    };
+
+    window.showAbout = () => { document.getElementById('about-modal').classList.remove('hidden'); };
+    window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
     
-    // THEME ENGINE
     const THEMES = {
         cricket: { icon: "fa-microphone-lines", quotes: ["Marvellous effort that...", "Got him, yes! Piss off, you're out!", "Choo for choo-chwenty-choo...", "Morning Richie, morning everyone...", "He's throwing bloody watermelons out there!", "That's just simply non-cents...", "Welcome back to the MCG...", "Can't bowl, can't throw..."] },
         rugby: { icon: "fa-football", quotes: ["He's gone straight through 'em!", "That is absolute magic!", "Welcome to Friday Night Footy...", "Giving 110%...", "He stepped him!", "Try time!", "Sending it upstairs..."] },
@@ -238,7 +283,6 @@
         document.getElementById('loader-icon').className = `fa-solid ${THEMES[currentThemeKey].icon}`;
     };
     
-    window.hideModal = (id) => document.getElementById(id).classList.add('hidden');
     window.logout = () => { localStorage.removeItem('cp_user'); location.reload(); };
     window.isWithinSeason = function(dStr) { if (!config.SeasonStart || !config.SeasonEnd) return true; const d = new Date(dStr); return d >= new Date(config.SeasonStart) && d <= new Date(config.SeasonEnd); };
     
@@ -316,7 +360,6 @@
     };
     window.hideToast = () => { document.getElementById('sync-toast').classList.add('translate-y-10', 'opacity-0', 'pointer-events-none'); };
 
-    // --- SILENT CONFIG FETCH FOR FRESH LOAD ---
     async function fetchConfigSilent() {
         try {
             const res = await fetch(DATABASE_URL + "?action=getData");
@@ -355,8 +398,15 @@
       
       window.applyWhiteLabel();
       document.getElementById('user-display').innerText = currentUser.username;
-      if (currentUser.role === 'captain') { activeTeamId = currentUser.teamId; document.getElementById('nav-setup').style.display = 'none'; } 
-      else { if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id; document.getElementById('nav-setup').style.display = 'flex'; }
+      document.getElementById('menu-user-display').innerText = currentUser.username;
+      
+      if (currentUser.role === 'captain') { 
+          activeTeamId = currentUser.teamId; 
+          document.getElementById('menu-setup-btn').style.display = 'none'; 
+      } else { 
+          if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id; 
+          document.getElementById('menu-setup-btn').style.display = 'flex'; 
+      }
       renderAll();
     }
 
@@ -581,7 +631,6 @@
     window.renderMasterPlayerList = function() { 
       const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; 
       
-      // Render players assigned to specific teams
       teams.forEach(team => { 
         const teamP = players.filter(p => p.defaultTeam === team.id); 
         if(teamP.length > 0) {
@@ -589,7 +638,6 @@
         }
       }); 
 
-      // Render unassigned / casual players
       const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam));
       if(unassignedP.length > 0) {
           html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; 
