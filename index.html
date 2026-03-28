@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.38 🏏</title>
+  <title>Fees Please v2.39 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -201,7 +201,11 @@
                 </div>
                 <button onclick="handleConfigUpdate()" class="w-full bg-brand-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Save Configuration</button>
             </div>
-            <div class="flex justify-between items-center mb-4 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Team</button></div>
+            
+            <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">System Access & Logins</h2><button onclick="showUserModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New User</button></div>
+            <div id="setup-users-list" class="space-y-2 mb-10"></div>
+            
+            <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Team</button></div>
             <div id="setup-team-list" class="flex flex-wrap gap-2 mb-10"></div>
             <div class="flex justify-between items-center mb-4 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Fixtures & Management</h2><button onclick="showAddFixtureModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Match</button></div>
             <div id="setup-fixture-list" class="space-y-3 mb-10"></div>
@@ -225,9 +229,43 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.38</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.39</p>
           <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">The ultimate match day ledger. <br/>No more chasing transfers, no more spreadsheets in the rain.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
+      </div>
+  </div>
+
+  <div id="user-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000]">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
+          <h3 class="text-xl font-bold mb-6 text-brand-500 uppercase italic">System Access</h3>
+          <div class="space-y-4">
+              <div>
+                  <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1 font-bold">Username (Login ID)</label>
+                  <input id="user-name-input" placeholder="e.g. sunc" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner transition-colors disabled:opacity-50"/>
+              </div>
+              <div>
+                  <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1 font-bold">4-Digit PIN</label>
+                  <input id="user-pin-input" type="text" inputmode="numeric" placeholder="5555" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner tracking-[0.5em] font-mono text-center"/>
+              </div>
+              <div>
+                  <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1 font-bold">Role Level</label>
+                  <select id="user-role-select" onchange="toggleUserTeamSelect()" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-sm text-white outline-none shadow-inner">
+                      <option value="captain">Captain (Team specific)</option>
+                      <option value="admin">Admin (All access)</option>
+                  </select>
+              </div>
+              <div id="user-team-container">
+                  <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1 font-bold">Assigned Team</label>
+                  <select id="user-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-sm text-white outline-none shadow-inner"></select>
+              </div>
+          </div>
+          <div class="flex gap-3 mt-8">
+              <button onclick="hideModal('user-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button>
+              <button onclick="saveUser()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg active:scale-95 transition-all">Save User</button>
+          </div>
+          <div id="user-danger-zone" class="mt-4 pt-4 border-t border-zinc-800 text-center">
+              <button onclick="handleDeleteUserAction()" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Delete User</button>
+          </div>
       </div>
   </div>
 
@@ -240,7 +278,7 @@
   <script>
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
     
-    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
+    let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], users = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, currentUserEditId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
     let currentThemeKey = "cricket";
 
     window.switchScreen = (id) => { 
@@ -352,16 +390,10 @@
       
       try {
         const res = await fetch(DATABASE_URL + "?action=getData");
-        if (!res.ok) throw new Error(`Network block (${res.status}). Ensure you aren't running adblockers against Google Scripts.`);
-        
+        if (!res.ok) throw new Error(`Network block (${res.status}).`);
         const rawText = await res.text();
         let data;
-        try {
-            data = JSON.parse(rawText);
-        } catch(err) {
-            throw new Error("Google returned HTML instead of data. Check your Google Apps Script 'Who has access' setting.");
-        }
-
+        try { data = JSON.parse(rawText); } catch(err) { throw new Error("Google returned HTML instead of data."); }
         if (data.error) throw new Error("Backend Error: " + data.error);
 
         const found = (data.users || []).find(x => String(x.username).toLowerCase() === u && String(x.pin) === p);
@@ -383,11 +415,11 @@
 
     function loadWithUser(data) {
       players = data.players || []; transactions = data.transactions || []; fixtures = data.fixtures || []; teams = data.teams || []; fixturesSquad = data.fixturesSquad || []; config = data.config || {};
+      users = data.users || [];
+      
       currentThemeKey = config.AppTheme || "cricket";
       localStorage.setItem('cp_config', JSON.stringify(config));
       window.applyWhiteLabel();
-      
-      // FIXED: Only inject into the side menu now that the header badge is gone!
       document.getElementById('menu-user-display').innerText = currentUser.username;
       
       if (currentUser.role === 'captain') { 
@@ -433,8 +465,95 @@
       renderTeamAudit(); 
       renderSetupTeams(); 
       renderSetupFixtures(); 
+      renderSetupUsers();
       populateDropdowns(); 
     }
+
+    // --- NEW: USER MANAGEMENT RENDERS ---
+    window.renderSetupUsers = function() {
+        const list = document.getElementById('setup-users-list'); if(!list) return;
+        list.innerHTML = users.map(u => {
+            const teamName = u.teamId ? (teams.find(t => t.id === u.teamId)?.name || 'Unknown Team') : 'All Access';
+            return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[9px] font-black px-2 py-0.5 rounded border ${u.role === 'admin' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-brand-600/20 border-brand-500/30 text-brand-500'} uppercase">${u.role}</span>
+                        <span class="font-bold text-white text-sm">${u.username}</span>
+                    </div>
+                    <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">PIN: <span class="text-zinc-300 tracking-widest">${u.pin}</span> • ${teamName}</div>
+                </div>
+                <button onclick="openEditUser('${u.username}')" class="h-10 w-10 bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500"><i class="fa-solid fa-pen text-xs"></i></button>
+            </div>`;
+        }).join('');
+    }
+
+    window.toggleUserTeamSelect = function() {
+        const role = document.getElementById('user-role-select').value;
+        document.getElementById('user-team-container').style.display = (role === 'admin') ? 'none' : 'block';
+    }
+
+    window.showUserModal = function() {
+        currentUserEditId = null;
+        document.getElementById('user-name-input').value = "";
+        document.getElementById('user-name-input').disabled = false; 
+        document.getElementById('user-pin-input').value = "";
+        document.getElementById('user-role-select').value = "captain";
+        window.toggleUserTeamSelect();
+        window.populateDropdowns();
+        document.getElementById('user-danger-zone').classList.add('hidden');
+        document.getElementById('user-modal').classList.remove('hidden');
+    }
+
+    window.openEditUser = function(username) {
+        currentUserEditId = username;
+        const u = users.find(x => x.username === username);
+        document.getElementById('user-name-input').value = u.username;
+        document.getElementById('user-name-input').disabled = true; 
+        document.getElementById('user-pin-input').value = u.pin;
+        document.getElementById('user-role-select').value = u.role;
+        window.populateDropdowns();
+        document.getElementById('user-team-assign').value = u.teamId || "";
+        window.toggleUserTeamSelect();
+        
+        // Protect main admin account from accidental deletion
+        if (u.username.toLowerCase() === 'admin') { document.getElementById('user-danger-zone').classList.add('hidden'); } 
+        else { document.getElementById('user-danger-zone').classList.remove('hidden'); }
+        
+        document.getElementById('user-modal').classList.remove('hidden');
+    }
+
+    window.saveUser = async function() {
+        const username = document.getElementById('user-name-input').value.trim();
+        const pin = document.getElementById('user-pin-input').value.trim();
+        const role = document.getElementById('user-role-select').value;
+        let teamId = document.getElementById('user-team-assign').value;
+        
+        if (!username || !pin) return alert("Username and PIN required.");
+        if (role === 'admin') teamId = ""; 
+        if (role === 'captain' && !teamId) return alert("Captains must be assigned a team.");
+
+        window.showToast("Saving", "Updating access...");
+        try {
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveUser", username, originalUsername: currentUserEditId, pin, role, teamId }) });
+            window.hideModal('user-modal');
+            await window.loadData(true);
+            window.showToast("Success", "User saved", true);
+        } catch(e) { window.hideToast(); alert("Failed to save."); }
+    }
+
+    window.handleDeleteUserAction = async function() {
+        if (!currentUserEditId || currentUserEditId.toLowerCase() === 'admin') return;
+        if (!confirm(`Delete access for ${currentUserEditId}?`)) return;
+        window.showToast("Deleting", "Removing access...");
+        try {
+            await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteUser", username: currentUserEditId }) });
+            window.hideModal('user-modal');
+            await window.loadData(true);
+            window.showToast("Success", "User removed", true);
+        } catch(e) { window.hideToast(); }
+    }
+
+    // --- END NEW USER MANAGEMENT ---
 
     window.generateMatchFees = function(fixture) {
         const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10;
@@ -603,7 +722,12 @@
       list.innerHTML = html; 
     }
 
-    window.populateDropdowns = function() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = '<option value="-">Unassigned</option>' + teamHtml; }
+    window.populateDropdowns = function() { 
+        const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); 
+        if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; 
+        if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = '<option value="-">Unassigned</option>' + teamHtml; 
+        if(document.getElementById('user-team-assign')) document.getElementById('user-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; 
+    }
 
     window.openSquadPicker = function(fid) { currentSquadFixtureId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('squad-title').innerText = "Squad: " + f.opponent; document.getElementById('squad-search').value = ""; localSquadSelection = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); renderSquadPicker(); document.getElementById('squad-modal').classList.remove('hidden'); }
     window.renderSquadPicker = function() {
