@@ -150,8 +150,10 @@
 
       <div id="teams" class="screen mt-4 pb-10">
         <div id="setup-content">
+            
             <div class="bg-zinc-900 border border-zinc-800 p-6 mb-8 rounded-3xl shadow-lg border-t-4 border-t-brand-600">
                 <h2 class="font-black mb-6 uppercase text-[11px] tracking-widest text-brand-500 italic text-center">Global Configuration</h2>
+                
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Branding</label>
                     <div class="flex gap-2 mb-3">
@@ -159,6 +161,7 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Logo URL (Optional)</label><input id="config-club-logo" placeholder="https://..." class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
                     </div>
                 </div>
+
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Season Settings</label>
                     <div class="mb-3">
@@ -170,6 +173,7 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Ends</label><input id="config-season-end" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
                     </div>
                 </div>
+
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Match Financials</label>
                     <div class="flex gap-2 mb-3">
@@ -181,6 +185,7 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Casual ($)</label><input id="config-casual-fee" type="number" placeholder="25" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                     </div>
                 </div>
+
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance & Theme</label>
                     <div class="flex gap-2 mb-3">
@@ -199,6 +204,7 @@
                         </div>
                     </div>
                 </div>
+
                 <button onclick="handleConfigUpdate()" class="w-full bg-brand-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Save Configuration</button>
             </div>
             
@@ -241,6 +247,7 @@
   <div id="history-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] backdrop-blur-md"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[440px] mx-4 p-6 flex flex-col max-h-[90vh] shadow-2xl"><div class="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4"><div><h3 id="history-name" class="text-2xl font-black italic text-brand-500 uppercase tracking-tighter"></h3><p id="history-balance" class="text-[10px] font-black uppercase text-zinc-500 mt-1"></p></div><button onclick="hideModal('history-modal')" class="text-zinc-500 h-10 w-10 rounded-full bg-zinc-900 flex items-center justify-center shadow-inner"><i class="fa-solid fa-xmark"></i></button></div><div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div></div></div>
 
   <script>
+    // HARDCODED DATABASE URL
     const DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
     
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
