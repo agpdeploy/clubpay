@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fees Please v2.39 🏏</title>
+  <title>Fees Please v2.40 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -204,7 +204,6 @@
             
             <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">System Access & Logins</h2><button onclick="showUserModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New User</button></div>
             <div id="setup-users-list" class="space-y-2 mb-10"></div>
-            
             <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Team</button></div>
             <div id="setup-team-list" class="flex flex-wrap gap-2 mb-10"></div>
             <div class="flex justify-between items-center mb-4 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Fixtures & Management</h2><button onclick="showAddFixtureModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Match</button></div>
@@ -229,9 +228,27 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.39</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.40</p>
           <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">The ultimate match day ledger. <br/>No more chasing transfers, no more spreadsheets in the rain.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
+      </div>
+  </div>
+
+  <div id="transaction-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[5000]">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
+          <h3 class="text-xl font-bold mb-6 text-brand-500 uppercase italic">Add Transaction</h3>
+          <div class="space-y-4">
+              <div class="flex p-1 bg-zinc-800 rounded-xl border border-zinc-700 shadow-inner">
+                  <button id="btn-tx-pay" onclick="setTxType('payment')" class="flex-1 py-3 rounded-lg bg-brand-600 text-white font-bold text-xs">Payment (+)</button>
+                  <button id="btn-tx-charge" onclick="setTxType('charge')" class="flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs">Charge (-)</button>
+              </div>
+              <input id="tx-amount" type="number" inputmode="decimal" placeholder="Amount ($)" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner text-xl font-black text-center"/>
+              <input id="tx-note" type="text" placeholder="Note (e.g., Late Cash - Testers)" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner"/>
+          </div>
+          <div class="flex gap-3 mt-8">
+              <button onclick="hideModal('transaction-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button>
+              <button onclick="saveManualTransaction()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg active:scale-95 transition-all">Save</button>
+          </div>
       </div>
   </div>
 
@@ -280,6 +297,7 @@
     
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], users = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, currentUserEditId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
     let currentThemeKey = "cricket";
+    let currentTxPlayerId = null, currentTxType = 'payment';
 
     window.switchScreen = (id) => { 
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
@@ -469,7 +487,7 @@
       populateDropdowns(); 
     }
 
-    // --- NEW: USER MANAGEMENT RENDERS ---
+    // --- USER MANAGEMENT RENDERS ---
     window.renderSetupUsers = function() {
         const list = document.getElementById('setup-users-list'); if(!list) return;
         list.innerHTML = users.map(u => {
@@ -515,10 +533,8 @@
         document.getElementById('user-team-assign').value = u.teamId || "";
         window.toggleUserTeamSelect();
         
-        // Protect main admin account from accidental deletion
         if (u.username.toLowerCase() === 'admin') { document.getElementById('user-danger-zone').classList.add('hidden'); } 
         else { document.getElementById('user-danger-zone').classList.remove('hidden'); }
-        
         document.getElementById('user-modal').classList.remove('hidden');
     }
 
@@ -553,7 +569,58 @@
         } catch(e) { window.hideToast(); }
     }
 
-    // --- END NEW USER MANAGEMENT ---
+    // --- MANUAL TRANSACTION LOGIC ---
+    window.setTxType = function(type) {
+        currentTxType = type;
+        const payBtn = document.getElementById('btn-tx-pay');
+        const chgBtn = document.getElementById('btn-tx-charge');
+        if(type === 'payment') {
+            payBtn.className = 'flex-1 py-3 rounded-lg bg-brand-600 text-white font-bold text-xs';
+            chgBtn.className = 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs';
+        } else {
+            chgBtn.className = 'flex-1 py-3 rounded-lg bg-red-600 text-white font-bold text-xs';
+            payBtn.className = 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs';
+        }
+    }
+
+    window.openTransactionModal = function(pid) {
+        currentTxPlayerId = pid;
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-note').value = '';
+        window.setTxType('payment');
+        document.getElementById('transaction-modal').classList.remove('hidden');
+    }
+
+    window.saveManualTransaction = async function() {
+        let amt = parseFloat(document.getElementById('tx-amount').value);
+        const note = document.getElementById('tx-note').value.trim();
+        if(!amt || isNaN(amt) || !note) return alert("Amount and Note required.");
+        
+        if(currentTxType === 'charge') amt = -Math.abs(amt);
+        else amt = Math.abs(amt);
+
+        const p = players.find(x => x.id === currentTxPlayerId);
+        const tId = p ? p.defaultTeam : activeTeamId; 
+
+        window.showToast("Saving", "Processing manual transaction...");
+        try {
+            await fetch(DATABASE_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ 
+                    action: "saveTransaction", 
+                    playerId: currentTxPlayerId, 
+                    amount: amt, 
+                    type: currentTxType === 'payment' ? 'payment' : 'manual_charge', 
+                    note: "Manual: " + note, 
+                    teamId: tId 
+                }) 
+            });
+            window.hideModal('transaction-modal');
+            await window.loadData(true);
+            window.showHistory(currentTxPlayerId); // Auto-refresh the modal to show the new ledger
+            window.showToast("Success", "Transaction saved", true);
+        } catch(e) { window.hideToast(); alert("Failed to save."); }
+    }
 
     window.generateMatchFees = function(fixture) {
         const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10;
@@ -674,13 +741,19 @@
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET`); 
     }
 
+    // --- REBUILT SHOW HISTORY WITH ADD BUTTON ---
     window.showHistory = function(pid) { 
       currentEditId = pid; const p = players.find(x => x.id === pid); const bal = window.getSafeBalance(pid); 
       let history = [...transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date))].reverse(); 
       document.getElementById('history-name').innerText = p.firstName + " " + p.lastName; 
       document.getElementById('history-balance').innerText = "Balance: $" + bal.toFixed(2); 
       const list = document.getElementById('history-list'); 
-      list.innerHTML = history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : t.type}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-12 text-center opacity-30 text-xs font-black uppercase">No History</div>`; 
+      
+      let html = `<button onclick="openTransactionModal('${pid}')" class="w-full bg-brand-600/10 text-brand-500 border border-brand-500/20 font-black uppercase text-[10px] tracking-widest py-3 rounded-xl mb-4 shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-plus mr-1"></i> Add Manual Transaction</button>`;
+      
+      html += history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : (t.type === 'manual_charge' ? 'Charge' : t.type)}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-6 text-center opacity-30 text-xs font-black uppercase">No History</div>`; 
+      
+      list.innerHTML = html;
       document.getElementById('history-modal').classList.remove('hidden'); 
     }
 
