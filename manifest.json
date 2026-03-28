@@ -1,0 +1,16 @@
+{
+  "name": "Fees Please",
+  "short_name": "Fees Please",
+  "description": "The ultimate match day ledger.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "fp_logo.png", 
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
