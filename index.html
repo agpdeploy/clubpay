@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.56 🏏</title>
+  <title>Fees Please v2.57 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -47,20 +47,6 @@
     </div>
   </div>
 
-  <div id="gateway-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
-    <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
-      <div class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
-          <div class="text-7xl mb-3 text-brand-500 font-black italic"><i class="fa-solid fa-globe"></i></div>
-          <h1 class="text-2xl font-bold italic text-white uppercase tracking-tight">System Gateway</h1>
-          <p class="text-[10px] text-zinc-500 uppercase mt-2 font-bold tracking-widest">Enter Club Code</p>
-      </div>
-      <div class="space-y-3 mb-6 relative z-10">
-        <input id="gateway-code" type="text" placeholder="e.g. FERNY" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 text-center tracking-widest font-black transition-colors"/>
-      </div>
-      <button onclick="handleGateway()" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all relative z-10">Connect</button>
-    </div>
-  </div>
-
   <div id="login-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
       <div id="login-brand-area" class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
@@ -74,9 +60,8 @@
       </div>
       <button onclick="handleLogin()" class="w-full bg-brand-600 text-white font-bold py-4 rounded-xl uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all relative z-10">Sign In</button>
       
-      <div class="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center relative z-10">
-          <button onclick="localStorage.removeItem('cp_user'); location.reload();" class="text-zinc-500 text-[9px] uppercase font-bold tracking-widest">Wipe Cache</button>
-          <button onclick="switchClub()" class="text-zinc-500 text-[9px] uppercase font-bold tracking-widest">Change Club <i class="fa-solid fa-arrow-right-arrow-left ml-1"></i></button>
+      <div class="mt-6 pt-4 border-t border-zinc-800 flex justify-center items-center relative z-10">
+          <button onclick="localStorage.clear(); location.reload();" class="text-zinc-500 text-[9px] uppercase font-bold tracking-widest">Wipe Cache & Retry</button>
       </div>
     </div>
   </div>
@@ -102,10 +87,6 @@
                 <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">About App</span>
             </button>
             <div class="my-4 border-t border-zinc-800/50 mx-2"></div>
-            <button onclick="switchClub()" class="w-full flex items-center p-4 rounded-2xl hover:bg-zinc-800/50 active:bg-zinc-800 transition-colors group">
-                <div class="w-8 flex justify-center"><i class="fa-solid fa-globe text-zinc-500 group-hover:text-brand-500 transition-colors text-lg"></i></div>
-                <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">Switch Club</span>
-            </button>
             <button onclick="window.loadData(); toggleMenu();" class="w-full flex items-center p-4 rounded-2xl hover:bg-zinc-800/50 active:bg-zinc-800 transition-colors group">
                 <div class="w-8 flex justify-center"><i class="fa-solid fa-cloud-arrow-down text-zinc-500 group-hover:text-brand-500 transition-colors text-lg"></i></div>
                 <span class="font-black text-[11px] text-zinc-300 uppercase tracking-widest ml-3">Force Sync</span>
@@ -155,6 +136,20 @@
 
       <div id="teams" class="screen mt-4 pb-10">
         <div id="setup-content">
+            
+            <div class="bg-zinc-900 border border-zinc-800 p-6 mb-8 rounded-3xl shadow-lg border-t-4 border-t-red-600">
+                <h2 class="font-black mb-6 uppercase text-[11px] tracking-widest text-red-500 italic text-center"><i class="fa-solid fa-server mr-1"></i> System Connection</h2>
+                <div class="mb-4">
+                    <label class="text-[9px] uppercase font-bold text-zinc-500 block mb-1 ml-1">Google App Script URL</label>
+                    <input id="config-db-url" type="text" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-xs text-white shadow-inner font-mono opacity-70"/>
+                </div>
+                <div class="flex gap-2 mb-6">
+                    <button onclick="setQuickLink('FERNY')" class="flex-1 bg-zinc-800 text-zinc-400 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all hover:bg-zinc-700">Ferny CC</button>
+                    <button onclick="setQuickLink('BOWLS')" class="flex-1 bg-zinc-800 text-zinc-400 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all hover:bg-zinc-700">Bowls CC</button>
+                </div>
+                <button onclick="changeDatabase()" class="w-full bg-red-950/40 text-red-500 border border-red-900/30 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-md active:scale-95 transition-all">Switch Database & Reload</button>
+            </div>
+
             <div class="bg-zinc-900 border border-zinc-800 p-6 mb-8 rounded-3xl shadow-lg border-t-4 border-t-brand-600">
                 <h2 class="font-black mb-6 uppercase text-[11px] tracking-widest text-brand-500 italic text-center">Global Configuration</h2>
                 
@@ -248,8 +243,8 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.56</p>
-          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Multi-Club Gateway Architecture Active.</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.57</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Admin Gateway Architecture Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
   </div>
@@ -334,7 +329,9 @@
         "BOWLS": "https://script.google.com/macros/s/AKfycbx2hZDhh8f5-PSuzHZpGNLozYQYtfW1Us_X8fXnzy0HZ7iLaZrSI831WO7AbF5OPorzfQ/exec"
     };
 
-    let DATABASE_URL = localStorage.getItem('fp_db_url');
+    // HARD DEFAULT TO FERNY CC IF NOTHING IS SAVED IN MEMORY
+    const DEFAULT_DB = CLUB_DIRECTORY["FERNY"];
+    let DATABASE_URL = localStorage.getItem('fp_db_url') || DEFAULT_DB;
 
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], users = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, currentUserEditId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
     let currentThemeKey = "cricket";
@@ -346,33 +343,23 @@
     window.showAbout = () => { document.getElementById('about-modal').classList.remove('hidden'); };
     window.toggleLoader = (s) => { document.getElementById('loader').style.display = s ? 'flex' : 'none'; };
     
-    // --- GATEWAY LOGIC ---
-    window.handleGateway = function() {
-        const input = document.getElementById('gateway-code').value.trim();
-        const code = input.toUpperCase();
-        let finalUrl = "";
-        
-        if (input.startsWith('http')) {
-            finalUrl = input; 
-        } else if (CLUB_DIRECTORY[code]) {
-            finalUrl = CLUB_DIRECTORY[code];
-        }
-
-        if (finalUrl) {
-            DATABASE_URL = finalUrl;
-            localStorage.setItem('fp_db_url', finalUrl);
-            document.getElementById('gateway-screen').style.display = 'none';
-            document.getElementById('login-screen').style.display = 'flex';
-        } else {
-            alert("Invalid Club Code. Check spelling or paste direct URL.");
+    // --- ADMIN SYSTEM CONNECTION LOGIC ---
+    window.setQuickLink = function(key) {
+        if (CLUB_DIRECTORY[key]) {
+            document.getElementById('config-db-url').value = CLUB_DIRECTORY[key];
         }
     };
 
-    window.switchClub = function() {
-        localStorage.removeItem('fp_db_url');
-        localStorage.removeItem('cp_user');
-        localStorage.removeItem('cp_config');
-        location.reload();
+    window.changeDatabase = function() {
+        const newUrl = document.getElementById('config-db-url').value.trim();
+        if (!newUrl || !newUrl.startsWith('http')) return alert("Please enter a valid Script URL.");
+        
+        if (confirm("Switching database will log you out. Continue?")) {
+            localStorage.setItem('fp_db_url', newUrl);
+            localStorage.removeItem('cp_user');
+            localStorage.removeItem('cp_config');
+            location.reload();
+        }
     };
     
     const THEMES = { cricket: { icon: "fa-microphone-lines", quotes: ["Marvellous effort that...", "Got him, yes! Piss off, you're out!", "Choo for choo-chwenty-choo...", "Morning Richie, morning everyone...", "He's throwing bloody watermelons out there!", "That's just simply non-cents...", "Welcome back to the MCG...", "Can't bowl, can't throw..."] }, rugby: { icon: "fa-football", quotes: ["He's gone straight through 'em!", "That is absolute magic!", "Welcome to Friday Night Footy...", "Giving 110%...", "He stepped him!", "Try time!", "Sending it upstairs..."] }, bluey: { icon: "fa-paw", quotes: ["Wackadoo!", "For real life?", "Gotta be done!", "Cheese and crackers!", "Ah, biscuits!", "How very dare you!", "This is trifficult...", "Hooray!"] }, standard: { icon: "fa-stopwatch", quotes: ["Warming up...", "Lacing up boots...", "Reviewing the playbook...", "Checking the VAR...", "Stretching...", "Getting in the zone..."] } };
@@ -448,6 +435,7 @@
     function renderAll() { 
       updateUI('active-season-label', config.CurrentSeason || "No Season"); 
       if (currentUser && currentUser.role === 'admin') { 
+          document.getElementById('config-db-url').value = DATABASE_URL;
           document.getElementById('config-square-app-id').value = config.SquareAppId || ""; 
           document.getElementById('config-club-name').value = config.ClubName || ""; 
           document.getElementById('config-club-logo').value = config.ClubLogo || ""; 
@@ -779,36 +767,22 @@
     window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
     window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
 
-    const savedConfigStr = localStorage.getItem('cp_config');
-    if (savedConfigStr) { config = JSON.parse(savedConfigStr); currentThemeKey = config.AppTheme || "cricket"; window.applyWhiteLabel(); window.updateLoaderText(); }
-    
-    // --- SMART INIT & MIGRATION ROUTING ---
+    // --- SMART INIT & ROUTING ---
     const savedUser = localStorage.getItem('cp_user');
     
+    // If no custom URL is set, default to Ferny
     if (!DATABASE_URL) {
-        if (savedUser) {
-            // Legacy captain detected! Silently route them to Ferny to prevent lockout.
-            DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
-            localStorage.setItem('fp_db_url', DATABASE_URL);
-            
-            currentUser = JSON.parse(savedUser); 
-            document.getElementById('app').style.display = 'flex'; 
-            window.handleSquareCallback(); 
-            window.loadData(); 
-        } else {
-            // Fresh device. Show the Gateway screen.
-            document.getElementById('gateway-screen').style.display = 'flex';
-        }
-    } else {
-        // Normal flow
-        if (savedUser) { 
-            currentUser = JSON.parse(savedUser); 
-            document.getElementById('app').style.display = 'flex'; 
-            window.handleSquareCallback(); 
-            window.loadData(); 
-        } else { 
-            document.getElementById('login-screen').style.display = 'flex'; 
-        }
+        DATABASE_URL = DEFAULT_DB;
+        localStorage.setItem('fp_db_url', DEFAULT_DB);
+    }
+    
+    if (savedUser) { 
+        currentUser = JSON.parse(savedUser); 
+        document.getElementById('app').style.display = 'flex'; 
+        window.handleSquareCallback(); 
+        window.loadData(); 
+    } else { 
+        document.getElementById('login-screen').style.display = 'flex'; 
     }
   </script>
 </body>
