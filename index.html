@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.55 🏏</title>
+  <title>Fees Please v2.56 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -52,7 +52,7 @@
       <div class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
           <div class="text-7xl mb-3 text-brand-500 font-black italic"><i class="fa-solid fa-globe"></i></div>
           <h1 class="text-2xl font-bold italic text-white uppercase tracking-tight">System Gateway</h1>
-          <p class="text-[10px] text-zinc-500 uppercase mt-2 font-bold tracking-widest">Enter Club Code or Script URL</p>
+          <p class="text-[10px] text-zinc-500 uppercase mt-2 font-bold tracking-widest">Enter Club Code</p>
       </div>
       <div class="space-y-3 mb-6 relative z-10">
         <input id="gateway-code" type="text" placeholder="e.g. FERNY" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 text-center tracking-widest font-black transition-colors"/>
@@ -248,7 +248,7 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.55</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.56</p>
           <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Multi-Club Gateway Architecture Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
@@ -334,7 +334,7 @@
         "BOWLS": "https://script.google.com/macros/s/AKfycbx2hZDhh8f5-PSuzHZpGNLozYQYtfW1Us_X8fXnzy0HZ7iLaZrSI831WO7AbF5OPorzfQ/exec"
     };
 
-    let DATABASE_URL = localStorage.getItem('fp_db_url') || "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
+    let DATABASE_URL = localStorage.getItem('fp_db_url');
 
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], users = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, currentUserEditId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
     let currentThemeKey = "cricket";
@@ -353,7 +353,7 @@
         let finalUrl = "";
         
         if (input.startsWith('http')) {
-            finalUrl = input; // Allow pasting raw URL for unlisted beta clubs
+            finalUrl = input; 
         } else if (CLUB_DIRECTORY[code]) {
             finalUrl = CLUB_DIRECTORY[code];
         }
@@ -467,7 +467,6 @@
       renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderTeamAudit(); renderSetupTeams(); renderSetupFixtures(); renderSetupUsers(); populateDropdowns(); 
     }
 
-    // --- SQUARE POS INTENT LAUNCHER ---
     window.launchSquarePOS = function(amount, note) {
         if (!config.SquareAppId) return;
         const amountInCents = Math.round(amount * 100);
@@ -477,7 +476,6 @@
         window.location.href = intentUrl;
     };
 
-    // --- SQUARE CALLBACK LISTENER ---
     window.handleSquareCallback = function() {
         const urlStr = window.location.href;
         const urlParams = new URLSearchParams(window.location.search);
@@ -556,7 +554,6 @@
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET`); 
     }
 
-    // --- MATCH AUDIT MODAL (TAP ON ROW) ---
     window.showMatchAudit = function(opp) {
         const teamTx = transactions.filter(t => t.teamId === activeTeamId && window.isWithinSeason(t.date) && t.note && t.note.includes(opp)).reverse();
         updateUI('match-audit-title', 'vs ' + opp);
@@ -621,7 +618,6 @@
         document.getElementById('transaction-modal').classList.remove('hidden'); 
     }
     
-    // --- MANUAL TRANSACTION CHECKOUT ---
     window.saveManualTransaction = function() { 
         let baseAmt = parseFloat(document.getElementById('tx-amount').value); 
         let userNote = document.getElementById('tx-note').value.trim(); 
@@ -705,7 +701,6 @@
     window.togglePlayerSelection = function(pid) { if (selectedForPayment.includes(pid)) { selectedForPayment = selectedForPayment.filter(id => id !== pid); delete persistentAmounts[pid]; } else { selectedForPayment.push(pid); paymentMethods[pid] = 'Cash'; } renderGamedaySelection(); calculateSessionTotal(); }
     window.captureAmount = function(pid, val) { persistentAmounts[pid] = val; calculateSessionTotal(); }
     
-    // --- GAMEDAY INDIVIDUAL POS CHECKOUT ---
     window.setPaymentMethod = function(pid, method) { 
         if (method === 'Card' && config.SquareAppId) {
             const fix = fixtures.find(f => f.id === activeFixtureId);
@@ -757,4 +752,64 @@
         window.renderGamedaySelection(); window.renderPlayersList(); window.renderTeamAudit();
     }
 
-    window.renderPlayersList = function() { const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; let filtered = players.filter(p => { const teamMatch = (currentUser.role === 'admin') ? (p.defaultTeam === activeTeamId) : (p.defaultTeam === currentUser.teamId); return `${p.firstName} ${p.lastName}`.toLowerCase().includes(term) && teamMatch; }); list.innerHTML = filtered.map(p => { const bal = window.getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p
+    window.renderPlayersList = function() { const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; let filtered = players.filter(p => { const teamMatch = (currentUser.role === 'admin') ? (p.defaultTeam === activeTeamId) : (p.defaultTeam === currentUser.teamId); return `${p.firstName} ${p.lastName}`.toLowerCase().includes(term) && teamMatch; }); list.innerHTML = filtered.map(p => { const bal = window.getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all shadow-sm"><div class="flex-1"><div class="font-bold text-zinc-100 text-base">${p.firstName} ${p.lastName.charAt(0)}.</div></div><div class="text-xl font-black ${bal<0?'text-red-500':'text-brand-500'} italic">$${bal.toFixed(2)}</div></div>`; }).join(''); }
+    
+    window.showHistory = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); const bal = window.getSafeBalance(pid); let history = [...transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date))].reverse(); updateUI('history-name', p.firstName + " " + p.lastName.charAt(0) + "."); updateUI('history-balance', "Balance: $" + bal.toFixed(2)); const list = document.getElementById('history-list'); let html = `<button onclick="openTransactionModal('${pid}')" class="w-full bg-brand-600/10 text-brand-500 border border-brand-500/20 font-black uppercase text-[10px] tracking-widest py-3 rounded-xl mb-4 shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-plus mr-1"></i> Add Manual Transaction</button>`; html += history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : (t.type === 'manual_charge' ? 'Charge' : t.type)}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-6 text-center opacity-30 text-xs font-black uppercase">No History</div>`; list.innerHTML = html; document.getElementById('history-modal').classList.remove('hidden'); }
+    window.renderTeamPills = function() { const caps = currentUser?.role === 'captain'; [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(!c) return; c.style.display = caps ? 'none' : 'flex'; c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-6 py-3 rounded-full text-xs font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-brand-600 border-brand-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
+    window.renderSetupTeams = function() { const list = document.getElementById('setup-team-list'); if(!list) return; list.innerHTML = teams.map(t => `<div class="bg-zinc-900 border border-zinc-800 px-5 py-3 rounded-xl text-[10px] font-black uppercase text-zinc-300 flex items-center gap-3">${t.name}<button onclick="handleDeleteTeam('${t.id}')" class="text-red-900/40 hover:text-red-500 ml-2"><i class="fa-solid fa-xmark"></i></button></div>`).join(''); }
+    window.renderSetupFixtures = function() { const list = document.getElementById('setup-fixture-list'); if(!list) return; let html = ""; teams.forEach(team => { const teamF = fixtures.filter(f => f.teamId === team.id && window.isWithinSeason(f.date)); html += `<div class="team-group-header uppercase">${team.name}</div>`; if(teamF.length === 0) html += `<div class="p-4 opacity-20 text-[10px] uppercase font-bold">No matches</div>`; teamF.forEach(f => { const isClosed = transactions.some(t => t.note.includes(f.opponent) && t.type === 'expense' && String(t.teamId) === String(f.teamId)); html += `<div class="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 mb-3 flex justify-between items-center shadow-lg"><div><div class="font-bold text-sm text-white">vs ${f.opponent}</div><div class="text-[10px] text-brand-500 font-black uppercase">${formatAUDate(f.date)}</div></div><div class="flex items-center gap-2"><button onclick="openSquadPicker('${f.id}')" class="px-4 py-2 bg-brand-600/20 text-brand-500 rounded-lg text-[10px] font-black uppercase border border-brand-600/30 shadow-inner">Squad</button>${isClosed ? `<span class="px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg text-[10px] font-black uppercase border border-zinc-700">Locked ✓</span>` : `<button onclick="handleCloseGame('${f.id}')" class="px-4 py-2 bg-red-950/20 text-red-500 rounded-lg text-[10px] font-black uppercase border border-red-900/20 shadow-md">Close</button>`}<button onclick="openEditFixture('${f.id}')" class="h-10 w-10 bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500"><i class="fa-solid fa-pen text-xs"></i></button></div></div>`; }); }); list.innerHTML = html; }
+    window.renderMasterPlayerList = function() { const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; teams.forEach(team => { const teamP = players.filter(p => p.defaultTeam === team.id); if(teamP.length > 0) { html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; } }); const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam)); if(unassignedP.length > 0) { html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; } list.innerHTML = html; }
+    window.populateDropdowns = function() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = '<option value="-">Unassigned</option>' + teamHtml; if(document.getElementById('user-team-assign')) document.getElementById('user-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; }
+    window.openSquadPicker = function(fid) { currentSquadFixtureId = fid; const f = fixtures.find(x => x.id === fid); updateUI('squad-title', "Squad: " + f.opponent); document.getElementById('squad-search').value = ""; localSquadSelection = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); renderSquadPicker(); document.getElementById('squad-modal').classList.remove('hidden'); }
+    window.renderSquadPicker = function() { const term = document.getElementById('squad-search').value.toLowerCase(); const f = fixtures.find(x => x.id === currentSquadFixtureId); const list = document.getElementById('squad-picker-list'); const sorted = [...players].sort((a,b) => (a.defaultTeam === f.teamId ? -1 : 1)); let html = "", rS = false; sorted.forEach(p => { if (!`${p.firstName} ${p.lastName}`.toLowerCase().includes(term)) return; const pri = p.defaultTeam === f.teamId; if (!pri && !rS) { html += `<div class="picker-section-label">Club Members & Casuals</div>`; rS = true; } else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; } const chk = localSquadSelection.includes(p.id); html += `<div onclick="toggleLocalSquad('${p.id}')" class="squad-check p-4 bg-zinc-800/40 rounded-2xl flex justify-between items-center mb-1 ${chk?'selected':''}"><div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName.charAt(0)}.</div></div><i class="fa-solid ${chk?'fa-check-circle text-white':'fa-circle-plus opacity-20 text-white'} text-lg transition-all"></i></div>`; }); list.innerHTML = html; }
+    window.toggleLocalSquad = function(pid) { if (localSquadSelection.includes(pid)) { localSquadSelection = localSquadSelection.filter(id => id !== pid); } else { localSquadSelection.push(pid); } renderSquadPicker(); }
+    window.saveSquad = async function() { window.showToast("Saving", "Updating squad..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(true); window.showToast("Success", "Squad saved", true); } catch(e) { window.hideToast(); alert("Save failed"); } }
+    window.handleConfigUpdate = async function() { const n = document.getElementById('config-season-name').value.trim(); const s = document.getElementById('config-season-start').value; const e = document.getElementById('config-season-end').value; const feeLbl = document.getElementById('config-fee-label').value.trim(); const baseF = document.getElementById('config-base-fee').value; const memF = document.getElementById('config-member-fee').value; const casF = document.getElementById('config-casual-fee').value; const cSurch = document.getElementById('config-card-surcharge').value; const tColor = document.getElementById('config-theme-color').value; const fFam = document.getElementById('config-font-family').value.trim(); const aTheme = document.getElementById('config-app-theme').value; const cName = document.getElementById('config-club-name').value.trim(); const cLogo = document.getElementById('config-club-logo').value.trim(); const sqId = document.getElementById('config-square-app-id').value.trim(); window.showToast("Saving", "Updating config..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, cardSurcharge: cSurch, themeColor: tColor, fontFamily: fFam, appTheme: aTheme, clubName: cName, clubLogo: cLogo, squareAppId: sqId }) }); await window.loadData(true); window.showToast("Success", "Configuration updated", true); } catch(e) { window.hideToast(); alert("Update failed"); } }
+    window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); const feeLbl = config.FeeLabel || "Umpire Fee"; const baseF = parseFloat(config.BaseFee) || 75; if(!confirm(`Lock vs ${f.opponent} & charge squad?`)) return; const payload = { action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], matchFees: window.generateMatchFees(f), umpireFee: true, feeAmount: baseF, feeLabel: feeLbl }; window.showToast("Locking", "Closing match..."); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }).then(() => { window.loadData(true); window.showToast("Success", "Match locked", true); }).catch((e) => { window.hideToast(); console.error(e); }); }
+    window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; window.populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
+    window.openEditFixture = function(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; window.populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
+    window.saveFixture = async function() { const opp = document.getElementById('fixture-opponent').value.trim(); const date = document.getElementById('fixture-date').value; const teamId = document.getElementById('fixture-team-assign').value; if(!opp || !date || !teamId) return alert("Fill all fields"); window.showToast("Saving", "Updating match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixture", id: currentFixtureEditId || 'f' + Date.now(), teamId: teamId, opponent: opp, date }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match saved", true); } catch(e) { window.hideToast(); } }
+    window.handleDeleteFixtureAction = async function() { if (!currentFixtureEditId || !confirm("Delete match?")) return; window.showToast("Deleting", "Removing match..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteFixture", id: currentFixtureEditId }) }); window.hideModal('fixture-modal'); await window.loadData(true); window.showToast("Success", "Match deleted", true); } catch(e) { window.hideToast(); } }
+    window.showAddPlayerModal = function() { currentEditId = null; document.getElementById('player-first').value = ''; document.getElementById('player-last').value = ''; document.getElementById('player-team-assign').value = activeTeamId || "-"; window.setPlayerType(false); document.getElementById('player-modal').classList.remove('hidden'); }
+    window.openEditFromSetup = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); document.getElementById('player-first').value = p.firstName; document.getElementById('player-last').value = p.lastName; document.getElementById('player-team-assign').value = p.defaultTeam || "-"; window.setPlayerType(p.isMember); document.getElementById('player-modal').classList.remove('hidden'); }
+    window.savePlayer = async function() { const f = document.getElementById('player-first').value.trim(); const l = document.getElementById('player-last').value.trim(); const t = document.getElementById('player-team-assign').value; window.showToast("Saving", "Updating profile..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "savePlayer", id: currentEditId || 'p'+Date.now(), firstName: f, lastName: l, isMember: selectedIsMember, defaultTeam: t }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Profile saved", true); } catch(e) { window.hideToast(); } }
+    window.setPlayerType = function(m) { selectedIsMember = m; document.getElementById('btn-member').className = m ? 'flex-1 py-3 rounded-lg bg-brand-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; document.getElementById('btn-casual').className = !m ? 'flex-1 py-3 rounded-lg bg-brand-600 text-white font-bold text-xs' : 'flex-1 py-3 rounded-lg text-zinc-500 font-bold text-xs'; }
+    window.handleDeleteAction = async function() { if (!currentEditId || !confirm("Delete player?")) return; window.showToast("Deleting", "Removing player..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deletePlayer", id: currentEditId }) }); window.hideModal('player-modal'); await window.loadData(true); window.showToast("Success", "Player deleted", true); } catch(e) { window.hideToast(); } }
+    window.showAddTeamModal = function() { document.getElementById('team-name-input').value = ""; document.getElementById('team-modal').classList.remove('hidden'); }
+    window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
+    window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
+
+    const savedConfigStr = localStorage.getItem('cp_config');
+    if (savedConfigStr) { config = JSON.parse(savedConfigStr); currentThemeKey = config.AppTheme || "cricket"; window.applyWhiteLabel(); window.updateLoaderText(); }
+    
+    // --- SMART INIT & MIGRATION ROUTING ---
+    const savedUser = localStorage.getItem('cp_user');
+    
+    if (!DATABASE_URL) {
+        if (savedUser) {
+            // Legacy captain detected! Silently route them to Ferny to prevent lockout.
+            DATABASE_URL = "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
+            localStorage.setItem('fp_db_url', DATABASE_URL);
+            
+            currentUser = JSON.parse(savedUser); 
+            document.getElementById('app').style.display = 'flex'; 
+            window.handleSquareCallback(); 
+            window.loadData(); 
+        } else {
+            // Fresh device. Show the Gateway screen.
+            document.getElementById('gateway-screen').style.display = 'flex';
+        }
+    } else {
+        // Normal flow
+        if (savedUser) { 
+            currentUser = JSON.parse(savedUser); 
+            document.getElementById('app').style.display = 'flex'; 
+            window.handleSquareCallback(); 
+            window.loadData(); 
+        } else { 
+            document.getElementById('login-screen').style.display = 'flex'; 
+        }
+    }
+  </script>
+</body>
+</html>
