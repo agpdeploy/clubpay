@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.50 🏏</title>
+  <title>Fees Please v2.51 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -222,8 +222,8 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.50</p>
-          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Square Receipt Note Engine Active.</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.51</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Square API Version Update Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
   </div>
@@ -374,13 +374,16 @@
       renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderTeamAudit(); renderSetupTeams(); renderSetupFixtures(); renderSetupUsers(); populateDropdowns(); 
     }
 
-    // --- SQUARE POS INTENT LAUNCHER (UPDATED FOR CUSTOM NOTES) ---
+    // --- SQUARE POS INTENT LAUNCHER (V2.51 FIX) ---
     window.launchSquarePOS = function(amount, note) {
         if (!config.SquareAppId) return;
         const amountInCents = Math.round(amount * 100);
         const callbackUrl = window.location.href.split('?')[0]; 
         const safeNote = note ? encodeURIComponent(note) : 'Fees';
-        const intentUrl = `intent:#Intent;action=com.squareup.pos.action.CHARGE;package=com.squareup;S.com.squareup.pos.WEB_CALLBACK_URI=${encodeURIComponent(callbackUrl)};S.com.squareup.pos.CLIENT_ID=${config.SquareAppId};i.com.squareup.pos.TOTAL_AMOUNT=${amountInCents};S.com.squareup.pos.CURRENCY_CODE=AUD;S.com.squareup.pos.NOTE=${safeNote};S.com.squareup.pos.TENDER_TYPES=com.squareup.pos.TENDER_CARD;end`;
+        
+        // Added S.com.squareup.pos.API_VERSION=v2.0
+        const intentUrl = `intent:#Intent;action=com.squareup.pos.action.CHARGE;package=com.squareup;S.com.squareup.pos.WEB_CALLBACK_URI=${encodeURIComponent(callbackUrl)};S.com.squareup.pos.CLIENT_ID=${config.SquareAppId};S.com.squareup.pos.API_VERSION=v2.0;i.com.squareup.pos.TOTAL_AMOUNT=${amountInCents};S.com.squareup.pos.CURRENCY_CODE=AUD;S.com.squareup.pos.NOTE=${safeNote};S.com.squareup.pos.TENDER_TYPES=com.squareup.pos.TENDER_CARD;end`;
+        
         window.location.href = intentUrl;
     };
 
