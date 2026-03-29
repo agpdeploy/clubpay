@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.52 🏏</title>
+  <title>Fees Please v2.53 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -171,6 +171,10 @@
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Member ($)</label><input id="config-member-fee" type="number" placeholder="10" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Casual ($)</label><input id="config-casual-fee" type="number" placeholder="25" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                     </div>
+                    <div class="flex gap-2 mt-3">
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Card Surcharge (%)</label><input id="config-card-surcharge" type="number" placeholder="1.9" step="0.1" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
+                        <div class="flex-1"></div>
+                    </div>
                 </div>
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance & Theme</label>
@@ -222,8 +226,8 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.52</p>
-          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Individual Square POS Checkout Engine Active.</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.53</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Square Surcharge Calculator Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
   </div>
@@ -349,7 +353,6 @@
       currentThemeKey = config.AppTheme || "cricket"; localStorage.setItem('cp_config', JSON.stringify(config)); window.applyWhiteLabel(); updateUI('menu-user-display', currentUser.username);
       if (currentUser.role === 'captain') { activeTeamId = currentUser.teamId; document.getElementById('menu-setup-btn').style.display = 'none'; } else { if(!activeTeamId && teams.length > 0) activeTeamId = teams[0].id; document.getElementById('menu-setup-btn').style.display = 'flex'; } 
       
-      // Restore Draft State BEFORE Render
       const draftStateStr = localStorage.getItem('fp_draft_state');
       if (draftStateStr) {
           try {
@@ -387,6 +390,7 @@
           document.getElementById('config-base-fee').value = config.BaseFee || 75; 
           document.getElementById('config-member-fee').value = config.MemberFee || 10; 
           document.getElementById('config-casual-fee').value = config.CasualFee || 25; 
+          document.getElementById('config-card-surcharge').value = config.CardSurcharge || ""; 
           document.getElementById('config-theme-color').value = config.ThemeColor || "#10b981"; 
           document.getElementById('config-font-family').value = config.FontFamily || "Inter"; 
           document.getElementById('config-app-theme').value = config.AppTheme || "cricket"; 
@@ -423,7 +427,6 @@
             if (success) {
                 window.showToast("Square Success", "Finalizing ledger...");
                 
-                // If this came from GameDay bulk list, remove the player from the Draft State
                 if (draftStateStr && pid) {
                     let draft = JSON.parse(draftStateStr);
                     draft.selected = draft.selected.filter(id => id !== pid);
@@ -432,7 +435,6 @@
                     localStorage.setItem('fp_draft_state', JSON.stringify(draft));
                 }
 
-                // Optimistically inject into transactions array for immediate display
                 if (pendingCard.action === 'saveTransaction') {
                     transactions.push({ playerId: pendingCard.playerId, amount: pendingCard.amount, type: pendingCard.type, note: pendingCard.note, teamId: pendingCard.teamId, date: new Date().toISOString(), season: config.CurrentSeason });
                 } else if (pendingCard.action === 'saveSessionTake') {
@@ -451,7 +453,6 @@
                 });
 
             } else if (err || urlStr.includes('com.squareup.pos')) {
-                // If canceled, revert their payment method back to Cash so they can try again
                 if (draftStateStr && pid) {
                     let draft = JSON.parse(draftStateStr);
                     draft.methods[pid] = 'Cash';
@@ -511,15 +512,15 @@
     
     // --- MANUAL TRANSACTION CHECKOUT ---
     window.saveManualTransaction = function() { 
-        let amt = parseFloat(document.getElementById('tx-amount').value); 
+        let baseAmt = parseFloat(document.getElementById('tx-amount').value); 
         let userNote = document.getElementById('tx-note').value.trim(); 
         const fixSelect = document.getElementById('tx-fixture-select');
         const fixId = fixSelect ? fixSelect.value : null;
         const fix = fixtures.find(f => f.id === fixId);
 
-        if(!amt || isNaN(amt)) return alert("Amount required."); 
+        if(!baseAmt || isNaN(baseAmt)) return alert("Amount required."); 
         if(!userNote) userNote = currentTxType === 'payment' ? 'Manual Payment' : 'Manual Charge';
-        if(currentTxType === 'charge') amt = -Math.abs(amt); else amt = Math.abs(amt); 
+        if(currentTxType === 'charge') baseAmt = -Math.abs(baseAmt); else baseAmt = Math.abs(baseAmt); 
 
         const finalNote = fix ? `${userNote} - ${fix.opponent}` : userNote;
         const p = players.find(x => x.id === currentTxPlayerId); const tId = p ? p.defaultTeam : activeTeamId; 
@@ -527,14 +528,18 @@
         const isCard = userNote.toLowerCase().includes('card');
         const posNote = p ? `${p.firstName} ${p.lastName} - ${finalNote}` : finalNote;
 
-        const payload = { action: "saveTransaction", playerId: currentTxPlayerId, amount: amt, type: currentTxType === 'payment' ? 'payment' : 'manual_charge', note: safeNote, teamId: tId };
+        // Base amount goes to ledger
+        const payload = { action: "saveTransaction", playerId: currentTxPlayerId, amount: baseAmt, type: currentTxType === 'payment' ? 'payment' : 'manual_charge', note: safeNote, teamId: tId };
 
         if (isCard && currentTxType === 'payment' && config.SquareAppId) {
+            const surchargeRate = parseFloat(config.CardSurcharge) || 0;
+            const totalAmt = baseAmt + (baseAmt * (surchargeRate / 100)); // Apply Surcharge to Square total
+            
             localStorage.setItem('fp_pending_card', JSON.stringify(payload));
             window.hideModal('transaction-modal'); 
-            window.launchSquarePOS(amt, posNote);
+            window.launchSquarePOS(totalAmt, posNote);
         } else {
-            transactions.push({ playerId: currentTxPlayerId, amount: amt, type: currentTxType === 'payment' ? 'payment' : 'manual_charge', note: safeNote, teamId: tId, date: new Date().toISOString(), season: config.CurrentSeason });
+            transactions.push({ playerId: currentTxPlayerId, amount: baseAmt, type: currentTxType === 'payment' ? 'payment' : 'manual_charge', note: safeNote, teamId: tId, date: new Date().toISOString(), season: config.CurrentSeason });
             window.hideModal('transaction-modal'); window.showHistory(currentTxPlayerId); window.renderPlayersList(); window.renderTeamAudit();
             window.showToast("Syncing", "Saving in background..."); 
             fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) })
@@ -593,26 +598,29 @@
         if (method === 'Card' && config.SquareAppId) {
             const fix = fixtures.find(f => f.id === activeFixtureId);
             if (!fix) return;
-            const amt = parseFloat(persistentAmounts[pid]) || 0;
-            if (amt <= 0) { alert("Amount must be greater than 0 to charge Card."); return; }
+            const baseAmt = parseFloat(persistentAmounts[pid]) || 0;
+            if (baseAmt <= 0) { alert("Amount must be greater than 0 to charge Card."); return; }
             const p = players.find(x => x.id === pid);
             
-            const posNote = p ? `${p.firstName} ${p.lastName} - vs ${fix.opponent}` : `vs ${fix.opponent}`;
-            const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: [{ playerId: pid, amount: amt, formattedNote: `Card - ${fix.opponent}` }], umpireFee: false };
+            // Add surcharge
+            const surchargeRate = parseFloat(config.CardSurcharge) || 0;
+            const totalAmt = baseAmt + (baseAmt * (surchargeRate / 100));
             
-            // Save the current state of the screen so Ash and Craig are still there when we return
+            const posNote = p ? `${p.firstName} ${p.lastName} - vs ${fix.opponent}` : `vs ${fix.opponent}`;
+            // Ledger records base amount
+            const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: [{ playerId: pid, amount: baseAmt, formattedNote: `Card - ${fix.opponent}` }], umpireFee: false };
+            
             localStorage.setItem('fp_draft_state', JSON.stringify({ selected: selectedForPayment, amounts: persistentAmounts, methods: paymentMethods, umpire: umpireFeePaid }));
             localStorage.setItem('fp_pending_card', JSON.stringify(payload));
             
-            setTimeout(() => { window.launchSquarePOS(amt, posNote); }, 100);
-            return; // Exit function so we don't just change the color of the button
+            setTimeout(() => { window.launchSquarePOS(totalAmt, posNote); }, 100);
+            return; 
         }
         
         paymentMethods[pid] = method; 
         renderGamedaySelection(); 
     }
     
-    // --- GAMEDAY BULK SAVE (CASH ONLY NOW) ---
     window.submitBulkPayments = function() { 
         const fix = fixtures.find(f => f.id === activeFixtureId); if (!fix) return; 
         const feeLbl = config.FeeLabel || "Umpire Fee"; const baseF = parseFloat(config.BaseFee) || 75; 
@@ -649,7 +657,7 @@
     window.renderSquadPicker = function() { const term = document.getElementById('squad-search').value.toLowerCase(); const f = fixtures.find(x => x.id === currentSquadFixtureId); const list = document.getElementById('squad-picker-list'); const sorted = [...players].sort((a,b) => (a.defaultTeam === f.teamId ? -1 : 1)); let html = "", rS = false; sorted.forEach(p => { if (!`${p.firstName} ${p.lastName}`.toLowerCase().includes(term)) return; const pri = p.defaultTeam === f.teamId; if (!pri && !rS) { html += `<div class="picker-section-label">Club Members & Casuals</div>`; rS = true; } else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; } const chk = localSquadSelection.includes(p.id); html += `<div onclick="toggleLocalSquad('${p.id}')" class="squad-check p-4 bg-zinc-800/40 rounded-2xl flex justify-between items-center mb-1 ${chk?'selected':''}"><div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName}</div></div><i class="fa-solid ${chk?'fa-check-circle text-white':'fa-circle-plus opacity-20 text-white'} text-lg transition-all"></i></div>`; }); list.innerHTML = html; }
     window.toggleLocalSquad = function(pid) { if (localSquadSelection.includes(pid)) { localSquadSelection = localSquadSelection.filter(id => id !== pid); } else { localSquadSelection.push(pid); } renderSquadPicker(); }
     window.saveSquad = async function() { window.showToast("Saving", "Updating squad..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(true); window.showToast("Success", "Squad saved", true); } catch(e) { window.hideToast(); alert("Save failed"); } }
-    window.handleConfigUpdate = async function() { const n = document.getElementById('config-season-name').value.trim(); const s = document.getElementById('config-season-start').value; const e = document.getElementById('config-season-end').value; const feeLbl = document.getElementById('config-fee-label').value.trim(); const baseF = document.getElementById('config-base-fee').value; const memF = document.getElementById('config-member-fee').value; const casF = document.getElementById('config-casual-fee').value; const tColor = document.getElementById('config-theme-color').value; const fFam = document.getElementById('config-font-family').value.trim(); const aTheme = document.getElementById('config-app-theme').value; const cName = document.getElementById('config-club-name').value.trim(); const cLogo = document.getElementById('config-club-logo').value.trim(); const sqId = document.getElementById('config-square-app-id').value.trim(); window.showToast("Saving", "Updating config..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, themeColor: tColor, fontFamily: fFam, appTheme: aTheme, clubName: cName, clubLogo: cLogo, squareAppId: sqId }) }); await window.loadData(true); window.showToast("Success", "Configuration updated", true); } catch(e) { window.hideToast(); alert("Update failed"); } }
+    window.handleConfigUpdate = async function() { const n = document.getElementById('config-season-name').value.trim(); const s = document.getElementById('config-season-start').value; const e = document.getElementById('config-season-end').value; const feeLbl = document.getElementById('config-fee-label').value.trim(); const baseF = document.getElementById('config-base-fee').value; const memF = document.getElementById('config-member-fee').value; const casF = document.getElementById('config-casual-fee').value; const cSurch = document.getElementById('config-card-surcharge').value; const tColor = document.getElementById('config-theme-color').value; const fFam = document.getElementById('config-font-family').value.trim(); const aTheme = document.getElementById('config-app-theme').value; const cName = document.getElementById('config-club-name').value.trim(); const cLogo = document.getElementById('config-club-logo').value.trim(); const sqId = document.getElementById('config-square-app-id').value.trim(); window.showToast("Saving", "Updating config..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, cardSurcharge: cSurch, themeColor: tColor, fontFamily: fFam, appTheme: aTheme, clubName: cName, clubLogo: cLogo, squareAppId: sqId }) }); await window.loadData(true); window.showToast("Success", "Configuration updated", true); } catch(e) { window.hideToast(); alert("Update failed"); } }
     window.handleCloseGame = function(fid) { const f = fixtures.find(x => x.id === fid); const feeLbl = config.FeeLabel || "Umpire Fee"; const baseF = parseFloat(config.BaseFee) || 75; if(!confirm(`Lock vs ${f.opponent} & charge squad?`)) return; const payload = { action: "saveSessionTake", teamId: f.teamId, opponent: f.opponent, matchDate: f.date, payments: [], matchFees: window.generateMatchFees(f), umpireFee: true, feeAmount: baseF, feeLabel: feeLbl }; window.showToast("Locking", "Closing match..."); fetch(DATABASE_URL, { method: "POST", body: JSON.stringify(payload) }).then(() => { window.loadData(true); window.showToast("Success", "Match locked", true); }).catch((e) => { window.hideToast(); console.error(e); }); }
     window.showAddFixtureModal = function() { currentFixtureEditId = null; document.getElementById('fixture-opponent').value = ""; document.getElementById('fixture-date').value = ""; window.populateDropdowns(); document.getElementById('fixture-modal').classList.remove('hidden'); }
     window.openEditFixture = function(fid) { currentFixtureEditId = fid; const f = fixtures.find(x => x.id === fid); document.getElementById('fixture-opponent').value = f.opponent; document.getElementById('fixture-date').value = f.date ? new Date(f.date).toISOString().split('T')[0] : ""; window.populateDropdowns(); document.getElementById('fixture-team-assign').value = f.teamId; document.getElementById('fixture-modal').classList.remove('hidden'); }
