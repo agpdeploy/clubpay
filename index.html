@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.57 🏏</title>
+  <title>Fees Please v2.58 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -243,8 +243,8 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.57</p>
-          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Admin Gateway Architecture Active.</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.58</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Cache-Busting & Pre-Login Theming Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
   </div>
@@ -389,14 +389,29 @@
         window.applyBranding(); 
     }
 
+    // NEW: Fetch branding before login if switching databases
+    window.fetchBranding = async function() {
+        try {
+            const res = await fetch(DATABASE_URL + "?action=getData&nocache=" + Date.now());
+            const data = await res.json();
+            if (data.config) {
+                config = data.config;
+                currentThemeKey = config.AppTheme || "cricket";
+                localStorage.setItem('cp_config', JSON.stringify(config));
+                window.applyWhiteLabel();
+            }
+        } catch(e) { console.error("Could not fetch pre-login branding."); }
+    };
+
     window.handleLogin = async function() {
       const u = document.getElementById('login-user').value.trim().toLowerCase(); const p = document.getElementById('login-pin').value.trim();
       if(!u || !p) return alert("Credentials required"); window.updateLoaderText(); window.toggleLoader(true);
       try {
-        const res = await fetch(DATABASE_URL + "?action=getData"); 
+        // Cache Buster Added!
+        const res = await fetch(DATABASE_URL + "?action=getData&nocache=" + Date.now()); 
         if (!res.ok) throw new Error(`Network block (${res.status}).`);
         const rawText = await res.text(); let data;
-        try { data = JSON.parse(rawText); } catch(err) { throw new Error("Google returned HTML instead of data. Check Apps Script permissions."); }
+        try { data = JSON.parse(rawText); } catch(err) { throw new Error("Google returned HTML instead of data."); }
         if (data.error) throw new Error("Backend Error: " + data.error);
         const found = (data.users || []).find(x => String(x.username).toLowerCase() === u && String(x.pin) === p);
         if (found) { currentUser = found; localStorage.setItem('cp_user', JSON.stringify(found)); document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; loadWithUser(data); } else { alert("Invalid credentials."); }
@@ -430,7 +445,8 @@
       renderAll();
     }
 
-    window.loadData = async function(isSilent = false) { if(!isSilent) { window.updateLoaderText(); window.toggleLoader(true); } try { const res = await fetch(DATABASE_URL + "?action=getData"); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); } if(!isSilent) window.toggleLoader(false); }
+    // Cache Buster Added!
+    window.loadData = async function(isSilent = false) { if(!isSilent) { window.updateLoaderText(); window.toggleLoader(true); } try { const res = await fetch(DATABASE_URL + "?action=getData&nocache=" + Date.now()); const data = await res.json(); if (currentUser) loadWithUser(data); } catch(e) { console.error("Data load failed", e); } if(!isSilent) window.toggleLoader(false); }
 
     function renderAll() { 
       updateUI('active-season-label', config.CurrentSeason || "No Season"); 
@@ -767,10 +783,12 @@
     window.saveTeam = async function() { const name = document.getElementById('team-name-input').value.trim(); if(!name) return; window.showToast("Saving", "Creating team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveTeam", id: 't' + Date.now(), name }) }); window.hideModal('team-modal'); await window.loadData(true); window.showToast("Success", "Team created", true); } catch(e) { window.hideToast(); } }
     window.handleDeleteTeam = async function(tid) { if(!confirm("Delete team?")) return; window.showToast("Deleting", "Removing team..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "deleteTeam", id: tid }) }); await window.loadData(true); window.showToast("Success", "Team deleted", true); } catch(e) { window.hideToast(); } }
 
+    const savedConfigStr = localStorage.getItem('cp_config');
+    if (savedConfigStr) { config = JSON.parse(savedConfigStr); currentThemeKey = config.AppTheme || "cricket"; window.applyWhiteLabel(); window.updateLoaderText(); }
+    
     // --- SMART INIT & ROUTING ---
     const savedUser = localStorage.getItem('cp_user');
     
-    // If no custom URL is set, default to Ferny
     if (!DATABASE_URL) {
         DATABASE_URL = DEFAULT_DB;
         localStorage.setItem('fp_db_url', DEFAULT_DB);
@@ -783,6 +801,7 @@
         window.loadData(); 
     } else { 
         document.getElementById('login-screen').style.display = 'flex'; 
+        if (DATABASE_URL) window.fetchBranding();
     }
   </script>
 </body>
