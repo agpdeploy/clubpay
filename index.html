@@ -329,14 +329,12 @@
 
   <script>
     // --- CLUB DIRECTORY ---
-    // ADD YOUR CLUBS HERE. When a user types "FERNY", it links to that URL.
     const CLUB_DIRECTORY = {
         "FERNY": "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec",
-        "INDOOR": "PASTE_YOUR_INDOOR_SCRIPT_URL_HERE",
-        "BOWLS": "PASTE_YOUR_BOWLS_SCRIPT_URL_HERE"
+        "BOWLS": "https://script.google.com/macros/s/AKfycbx2hZDhh8f5-PSuzHZpGNLozYQYtfW1Us_X8fXnzy0HZ7iLaZrSI831WO7AbF5OPorzfQ/exec"
     };
 
-    let DATABASE_URL = localStorage.getItem('fp_db_url') || "";
+    let DATABASE_URL = localStorage.getItem('fp_db_url') || "https://script.google.com/macros/s/AKfycbzxo6c073cHLh67dGIewTsb1muNFI1PPGKJeMBg4MRnnIJ1_9NQYgdxGHC4DUjvy09H/exec";
 
     let players = [], transactions = [], fixtures = [], teams = [], fixturesSquad = [], users = [], config = {}, currentUser = null, activeTeamId = null, activeFixtureId = null, currentEditId = null, currentSquadFixtureId = null, currentUserEditId = null, localSquadSelection = [], persistentAmounts = {}, paymentMethods = {}, selectedForPayment = [], umpireFeePaid = false, selectedIsMember = true;
     let currentThemeKey = "cricket";
