@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.43 🏏</title>
+  <title>Fees Please v2.45 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -49,7 +49,7 @@
 
   <div id="login-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
-      <div class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
+      <div id="login-brand-area" class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
           <div id="login-logo-fallback" class="text-7xl mb-3 text-brand-500 font-black italic">FP</div>
           <img id="login-logo-img" src="" class="h-20 w-auto mb-3 hidden object-contain" alt="Club Logo" />
           <h1 id="login-title" class="text-2xl font-bold italic text-white uppercase tracking-tight">Fees Please</h1>
@@ -100,7 +100,6 @@
     </header>
 
     <main class="flex-1 overflow-y-auto pb-48 px-4">
-      
       <div id="log" class="screen active mt-4">
         <div id="team-pills-gameday" class="flex gap-2 overflow-x-auto pb-4 no-scrollbar"></div>
         <div id="fixture-card" class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-5 mb-4 hidden relative">
@@ -138,15 +137,15 @@
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Branding</label>
                     <div class="flex gap-2 mb-3">
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Club Name</label><input id="config-club-name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Logo URL (Optional)</label><input id="config-club-logo" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Club Name</label><input id="config-club-name" placeholder="e.g. Ferny CC" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Logo URL (Optional)</label><input id="config-club-logo" placeholder="https://..." class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
                     </div>
                 </div>
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Season Settings</label>
                     <div class="mb-3">
                         <label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Season Name</label>
-                        <input id="config-season-name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/>
+                        <input id="config-season-name" placeholder="e.g. Winter 2026" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/>
                     </div>
                     <div class="flex gap-2">
                         <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Starts</label><input id="config-season-start" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 shadow-inner"/></div>
@@ -156,19 +155,19 @@
                 <div class="mb-6">
                     <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">Match Financials</label>
                     <div class="flex gap-2 mb-3">
-                        <div class="flex-[2]"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Venue/Umpire Label</label><input id="config-fee-label" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Amount ($)</label><input id="config-base-fee" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
+                        <div class="flex-[2]"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Venue/Umpire Label</label><input id="config-fee-label" placeholder="e.g. Umpire Fee" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Amount ($)</label><input id="config-base-fee" type="number" placeholder="75" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                     </div>
                     <div class="flex gap-2">
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Member ($)</label><input id="config-member-fee" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Casual ($)</label><input id="config-casual-fee" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Member ($)</label><input id="config-member-fee" type="number" placeholder="10" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Casual ($)</label><input id="config-casual-fee" type="number" placeholder="25" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white text-center shadow-inner"/></div>
                     </div>
                 </div>
                 <div class="mb-6">
-                    <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance</label>
+                    <label class="text-[9px] uppercase font-bold text-brand-500 tracking-wider block mb-3 border-b border-zinc-800 pb-1">App Appearance & Theme</label>
                     <div class="flex gap-2 mb-3">
-                        <div class="flex-[2]"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Google Font</label><input id="config-font-family" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
-                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Theme Color</label><input id="config-theme-color" type="color" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl h-[46px] p-1 cursor-pointer shadow-inner"/></div>
+                        <div class="flex-[2]"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Google Font</label><input id="config-font-family" placeholder="Inter" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white shadow-inner"/></div>
+                        <div class="flex-1"><label class="text-[9px] uppercase text-zinc-500 block mb-1 ml-1">Theme Color</label><input id="config-theme-color" type="color" value="#10b981" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl h-[46px] p-1 cursor-pointer shadow-inner"/></div>
                     </div>
                     <div class="flex gap-2 mt-3">
                         <div class="flex-1">
@@ -185,13 +184,13 @@
                 <button onclick="handleConfigUpdate()" class="w-full bg-brand-600 py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Save Configuration</button>
             </div>
             
-            <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">System Access</h2><button onclick="showUserModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New User</button></div>
+            <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">System Access & Logins</h2><button onclick="showUserModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New User</button></div>
             <div id="setup-users-list" class="space-y-2 mb-10"></div>
             
             <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Manage Teams</h2><button onclick="showAddTeamModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Team</button></div>
             <div id="setup-team-list" class="flex flex-wrap gap-2 mb-10"></div>
             
-            <div class="flex justify-between items-center mb-4 px-1 mt-8"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Fixtures</h2><button onclick="showAddFixtureModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Match</button></div>
+            <div class="flex justify-between items-center mb-4 px-1"><h2 class="text-[11px] font-black uppercase italic text-zinc-400">Fixtures & Management</h2><button onclick="showAddFixtureModal()" class="text-brand-500 text-[11px] font-black uppercase tracking-widest">+ New Match</button></div>
             <div id="setup-fixture-list" class="space-y-3 mb-10"></div>
             
             <div class="bg-zinc-900/30 border-2 border-dashed border-zinc-800 p-6 mt-12 rounded-3xl">
@@ -214,13 +213,13 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.43</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.45</p>
           <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">The ultimate match day ledger. <br/>No more chasing transfers, no more spreadsheets in the rain.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
       </div>
   </div>
 
-  <div id="transaction-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[5000]">
+  <div id="transaction-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[6000]">
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl">
           <h3 class="text-xl font-bold mb-6 text-brand-500 uppercase italic">Add Transaction</h3>
           <div class="space-y-4">
@@ -277,6 +276,7 @@
   <div id="fixture-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 id="fixture-modal-title" class="text-xl font-bold mb-6 text-brand-500 uppercase italic">Match</h3><div class="space-y-4 text-left"><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Assigned Team</label><select id="fixture-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 outline-none shadow-inner"></select><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Opponent</label><input id="fixture-opponent" placeholder="Opponent" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner"/><label class="text-[9px] font-black uppercase text-zinc-500 ml-1">Date</label><input id="fixture-date" type="date" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-4 text-zinc-300 outline-none shadow-inner"/></div><div class="flex gap-3 mt-8"><button onclick="hideModal('fixture-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-xs">Cancel</button><button onclick="saveFixture()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-bold uppercase text-xs shadow-lg">Save Match</button></div><div id="fixture-danger-zone" class="mt-4 pt-4 text-center border-t border-zinc-800"><button onclick="handleDeleteFixtureAction()" class="text-red-500 text-[10px] font-black uppercase">Delete Match</button></div></div></div>
   <div id="player-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 id="modal-title" class="text-xl font-bold mb-6 text-brand-500 uppercase">Profile</h3><div class="space-y-4"><input id="player-first" placeholder="First Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner"/><input id="player-last" placeholder="Last Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500 shadow-inner"/><select id="player-team-assign" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-300 outline-none shadow-inner"></select><div class="flex p-1 bg-zinc-800 rounded-xl border border-zinc-700 mt-2 shadow-inner"><button id="btn-member" onclick="setPlayerType(true)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase text-white">Member</button><button id="btn-casual" onclick="setPlayerType(false)" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase text-white">Casual</button></div></div><div class="flex gap-3 mt-8"><button onclick="hideModal('player-modal')" class="flex-1 py-4 text-zinc-500 font-bold uppercase text-[10px]">Cancel</button><button onclick="savePlayer()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-bold uppercase text-[10px] shadow-lg">Save</button></div><div id="danger-zone" class="mt-4 pt-4 border-t border-zinc-800 text-center"><button onclick="handleDeleteAction()" class="text-red-500 text-[10px] font-black uppercase tracking-widest">Delete Player</button></div></div></div>
   <div id="team-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000]"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[360px] mx-4 p-6 shadow-2xl"><h3 class="text-xl font-bold mb-6 text-brand-500 uppercase text-center italic">New Team</h3><input id="team-name-input" placeholder="Team Name" class="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-4 px-4 text-white outline-none focus:border-brand-500"/><div class="flex gap-3 mt-8"><button onclick="hideModal('team-modal')" class="flex-1 py-4 text-zinc-500 font-bold">Cancel</button><button onclick="saveTeam()" class="flex-1 py-4 bg-brand-600 text-white rounded-xl font-bold uppercase text-xs shadow-lg">Create Team</button></div></div></div>
+  
   <div id="history-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[5000] backdrop-blur-md"><div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[440px] mx-4 p-6 flex flex-col max-h-[90vh] shadow-2xl"><div class="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4"><div><h3 id="history-name" class="text-2xl font-black italic text-brand-500 uppercase tracking-tighter"></h3><p id="history-balance" class="text-[10px] font-black uppercase text-zinc-500 mt-1"></p></div><button onclick="hideModal('history-modal')" class="text-zinc-500 h-10 w-10 rounded-full bg-zinc-900 flex items-center justify-center shadow-inner"><i class="fa-solid fa-xmark"></i></button></div><div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div></div></div>
 
   <script>
@@ -351,7 +351,6 @@
       renderTeamPills(); renderPlayersList(); findCurrentMatch(); renderGamedaySelection(); renderMasterPlayerList(); renderTeamAudit(); renderSetupTeams(); renderSetupFixtures(); renderSetupUsers(); populateDropdowns(); 
     }
 
-    // --- SMART AUDIT PARSER ---
     window.renderTeamAudit = function() { 
       const list = document.getElementById('team-audit-list'); if (!list) return; 
       const teamTx = transactions.filter(t => t.teamId === activeTeamId && window.isWithinSeason(t.date)); 
@@ -362,7 +361,10 @@
           if (!grouped[opp]) grouped[opp] = { cash: 0, card: 0, fee: 0 };
           const noteLower = t.note.toLowerCase();
           if (t.type === 'expense' || noteLower.includes(feeLbl.toLowerCase())) { grouped[opp].fee += Math.abs(t.amount); } 
-          else if (t.type === 'payment') { if (noteLower.includes('card') || noteLower.includes('transfer')) grouped[opp].card += parseFloat(t.amount); else grouped[opp].cash += parseFloat(t.amount); }
+          else if (t.type === 'payment' || t.type === 'manual_charge') { 
+              if (noteLower.includes('card') || noteLower.includes('transfer')) grouped[opp].card += parseFloat(t.amount); 
+              else grouped[opp].cash += parseFloat(t.amount); 
+          }
       });
       let seasonTotal = 0; 
       list.innerHTML = Object.keys(grouped).map(opp => { 
@@ -416,7 +418,6 @@
         } catch(e) { window.hideToast(); alert("Failed to save."); } 
     }
 
-    // --- SAFE GAMEDAY INIT ---
     window.generateMatchFees = function(fixture) { const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10; const casRate = parseFloat(config.CasualFee) !== undefined && !isNaN(parseFloat(config.CasualFee)) ? parseFloat(config.CasualFee) : 25; const squadIds = fixturesSquad.filter(s => s.fixtureId === fixture.id).map(s => s.playerId); const feesToCharge = []; squadIds.forEach(pid => { const alreadyCharged = transactions.some(t => String(t.playerId) === String(pid) && t.type === 'match_fee' && t.note.includes(fixture.opponent)); if (!alreadyCharged) { const p = players.find(x => x.id === pid); if (p) { feesToCharge.push({ playerId: pid, amount: p.isMember ? memRate : casRate, formattedNote: `Match Fee - ${fixture.opponent}` }); } } }); return feesToCharge; };
     
     function findCurrentMatch() { 
