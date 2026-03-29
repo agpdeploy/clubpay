@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <title>Fees Please v2.53 🏏</title>
+  <title>Fees Please v2.54 🏏</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script>
@@ -49,7 +49,7 @@
 
   <div id="login-screen" style="display:none;" class="fixed inset-0 bg-black flex-col items-center justify-center z-[1000]">
     <div class="bg-zinc-900 rounded-3xl w-full max-w-sm mx-4 p-8 border border-zinc-800 text-center shadow-2xl relative overflow-hidden animate-in fade-in duration-300">
-      <div id="login-brand-area" class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
+      <div class="mb-8 flex flex-col items-center justify-center min-h-[120px]">
           <div id="login-logo-fallback" class="text-7xl mb-3 text-brand-500 font-black italic">FP</div>
           <img id="login-logo-img" src="" class="h-20 w-auto mb-3 hidden object-contain" alt="Club Logo" />
           <h1 id="login-title" class="text-2xl font-bold italic text-white uppercase tracking-tight">Fees Please</h1>
@@ -226,9 +226,22 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[320px] mx-4 p-8 text-center shadow-2xl relative overflow-hidden">
           <div class="text-6xl mb-2 text-brand-500 font-black italic">FP</div>
           <h3 class="text-2xl font-bold mb-1 text-white uppercase italic">Fees Please</h3>
-          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.53</p>
-          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Square Surcharge Calculator Active.</p>
+          <p class="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-6">Version 2.54</p>
+          <p class="text-xs text-zinc-400 mb-8 leading-relaxed font-semibold">Audit Tap & Note Detail Engine Active.</p>
           <button onclick="hideModal('about-modal')" class="w-full py-4 bg-zinc-800 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Close</button>
+      </div>
+  </div>
+
+  <div id="match-audit-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[5000] backdrop-blur-md">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-[440px] mx-4 p-6 flex flex-col max-h-[90vh] shadow-2xl">
+          <div class="flex justify-between items-start mb-6 border-b border-zinc-800 pb-4">
+              <div>
+                  <h3 id="match-audit-title" class="text-2xl font-black italic text-brand-500 uppercase tracking-tighter"></h3>
+                  <p id="match-audit-summary" class="text-[10px] font-black uppercase text-zinc-500 mt-1"></p>
+              </div>
+              <button onclick="hideModal('match-audit-modal')" class="text-zinc-500 h-10 w-10 rounded-full bg-zinc-900 flex items-center justify-center shadow-inner active:scale-95 transition-all"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="match-audit-list" class="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar"></div>
       </div>
   </div>
 
@@ -483,9 +496,52 @@
       let seasonTotal = 0; 
       list.innerHTML = Object.keys(grouped).map(opp => { 
         const g = grouped[opp]; const netProfit = g.cash + g.card - g.fee; seasonTotal += netProfit; 
-        return `<div class="audit-grid text-zinc-300 font-bold border-b border-zinc-800 pb-3 text-[11px]"><span class="truncate pr-2">${opp}</span><span class="text-zinc-500">$${g.fee.toFixed(0)}</span><span class="text-brand-500">$${g.cash.toFixed(0)}</span><span class="text-blue-500">$${g.card.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-brand-400 text-right'} italic font-black text-xs">$${netProfit.toFixed(0)}</span></div>`; 
+        return `<div onclick="showMatchAudit('${opp.replace(/'/g, "\\'")}')" class="audit-grid cursor-pointer active:scale-95 transition-transform text-zinc-300 font-bold border-b border-zinc-800 pb-3 text-[11px]"><span class="truncate pr-2">${opp}</span><span class="text-zinc-500">$${g.fee.toFixed(0)}</span><span class="text-brand-500">$${g.cash.toFixed(0)}</span><span class="text-blue-500">$${g.card.toFixed(0)}</span><span class="${netProfit<0?'text-red-500 text-right':'text-brand-400 text-right'} italic font-black text-xs">$${netProfit.toFixed(0)}</span></div>`; 
       }).join('') || `<div class="py-4 text-center opacity-30 text-xs font-black uppercase">No matches found</div>`; 
       updateUI('team-season-total', `$${seasonTotal.toFixed(0)} NET`); 
+    }
+
+    // --- MATCH AUDIT MODAL (TAP ON ROW) ---
+    window.showMatchAudit = function(opp) {
+        const teamTx = transactions.filter(t => t.teamId === activeTeamId && window.isWithinSeason(t.date) && t.note && t.note.includes(opp)).reverse();
+        updateUI('match-audit-title', 'vs ' + opp);
+        
+        let cash = 0, card = 0, fee = 0;
+        const feeLbl = config.FeeLabel || "Umpire Fee";
+        
+        let html = teamTx.map(t => {
+            const amt = parseFloat(t.amount);
+            const isNeg = amt < 0;
+            
+            const noteLower = t.note.toLowerCase();
+            if (t.type === 'expense' || noteLower.includes(feeLbl.toLowerCase())) { fee += Math.abs(amt); }
+            else if (t.type === 'payment' || t.type === 'manual_charge') {
+                if (noteLower.includes('card') || noteLower.includes('transfer')) card += amt;
+                else cash += amt;
+            }
+            
+            let pName = "Team";
+            if(t.playerId) {
+                const p = players.find(x => x.id === t.playerId);
+                if(p) pName = p.firstName + " " + p.lastName.charAt(0);
+            }
+            
+            return `<div class="bg-zinc-800/40 p-4 rounded-2xl border border-zinc-800 flex justify-between items-center mb-2 shadow-inner">
+                <div>
+                    <div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : (t.type === 'manual_charge' ? 'Charge' : t.type)}</div>
+                    <div class="text-sm font-bold text-zinc-200">${pName} <span class="text-xs text-zinc-500 font-normal">(${t.note.split(' - ')[0]})</span></div>
+                </div>
+                <div class="text-base font-black ${isNeg ? 'text-red-400' : 'text-brand-400'}">${isNeg ? '-' : '+'}$${Math.abs(amt).toFixed(2)}</div>
+            </div>`;
+        }).join('');
+        
+        if(teamTx.length === 0) html = `<div class="py-6 text-center opacity-30 text-xs font-black uppercase">No transactions found</div>`;
+        
+        document.getElementById('match-audit-list').innerHTML = html;
+        const net = cash + card - fee;
+        updateUI('match-audit-summary', `Cash: $${cash.toFixed(0)} | Card: $${card.toFixed(0)} | Net: $${net.toFixed(0)}`);
+        
+        document.getElementById('match-audit-modal').classList.remove('hidden');
     }
 
     window.renderSetupUsers = function() { const list = document.getElementById('setup-users-list'); if(!list) return; list.innerHTML = users.map(u => { const teamName = u.teamId ? (teams.find(t => t.id === u.teamId)?.name || 'Unknown Team') : 'All Access'; return `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div><div class="flex items-center gap-2 mb-1"><span class="text-[9px] font-black px-2 py-0.5 rounded border ${u.role === 'admin' ? 'bg-purple-900/20 border-purple-500/30 text-purple-400' : 'bg-brand-600/20 border-brand-500/30 text-brand-500'} uppercase">${u.role}</span><span class="font-bold text-white text-sm">${u.username}</span></div><div class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">PIN: <span class="text-zinc-300 tracking-widest">${u.pin}</span> • ${teamName}</div></div><button onclick="openEditUser('${u.username}')" class="h-10 w-10 bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500"><i class="fa-solid fa-pen text-xs"></i></button></div>`; }).join(''); }
@@ -526,14 +582,15 @@
         const p = players.find(x => x.id === currentTxPlayerId); const tId = p ? p.defaultTeam : activeTeamId; 
         const safeNote = currentTxType === 'charge' ? `Charge: ${finalNote}` : finalNote;
         const isCard = userNote.toLowerCase().includes('card');
-        const posNote = p ? `${p.firstName} ${p.lastName} - ${finalNote}` : finalNote;
+        
+        const teamName = teams.find(t => t.id === tId)?.name || "Team";
+        const posNote = p ? `${p.firstName} ${p.lastName.charAt(0)} - ${teamName} Match Fees` : `${teamName} Match Fees`;
 
-        // Base amount goes to ledger
         const payload = { action: "saveTransaction", playerId: currentTxPlayerId, amount: baseAmt, type: currentTxType === 'payment' ? 'payment' : 'manual_charge', note: safeNote, teamId: tId };
 
         if (isCard && currentTxType === 'payment' && config.SquareAppId) {
             const surchargeRate = parseFloat(config.CardSurcharge) || 0;
-            const totalAmt = baseAmt + (baseAmt * (surchargeRate / 100)); // Apply Surcharge to Square total
+            const totalAmt = baseAmt + (baseAmt * (surchargeRate / 100)); 
             
             localStorage.setItem('fp_pending_card', JSON.stringify(payload));
             window.hideModal('transaction-modal'); 
@@ -584,7 +641,7 @@
         
         if (selectedForPayment.length > 0) { 
             saveArea.classList.remove('hidden'); const memRate = parseFloat(config.MemberFee) !== undefined && !isNaN(parseFloat(config.MemberFee)) ? parseFloat(config.MemberFee) : 10; const casRate = parseFloat(config.CasualFee) !== undefined && !isNaN(parseFloat(config.CasualFee)) ? parseFloat(config.CasualFee) : 25; 
-            bulkList.innerHTML = selectedForPayment.map(pid => { const p = players.find(x => x.id === pid); const method = paymentMethods[pid] || 'Cash'; const bal = window.getSafeBalance(pid); const feeDue = p.isMember ? memRate : casRate; const totalDue = (bal < 0) ? (Math.abs(bal) + feeDue) : feeDue; if (!persistentAmounts[pid]) persistentAmounts[pid] = totalDue; return `<div class="bg-zinc-900 border border-zinc-800 p-5 rounded-3xl flex flex-col gap-4 animate-in duration-200"><div class="flex justify-between items-start"><div><div class="font-bold text-base text-white">${p.firstName} ${p.lastName}</div><div class="flex gap-2 mt-1"><span class="text-[9px] font-black uppercase ${bal<0?'text-red-500':'text-zinc-500'}">Debt: $${Math.abs(bal).toFixed(0)}</span><span class="text-[9px] font-black uppercase text-brand-500">+ Match: $${feeDue}</span></div></div><div class="flex bg-zinc-800 p-1 rounded-xl gap-1"><button onclick="setPaymentMethod('${pid}', 'Cash')" class="px-4 py-2 rounded-lg text-sm transition-all ${method==='Cash'?'bg-emerald-600 text-white':'text-zinc-500'}"><i class="fa-solid fa-money-bill-1"></i></button><button onclick="setPaymentMethod('${pid}', 'Card')" class="px-4 py-2 rounded-lg text-sm transition-all ${method==='Card'?'bg-blue-600 text-white':'text-zinc-500'}"><i class="fa-solid fa-credit-card"></i></button></div></div><div class="bg-black/40 px-4 py-3 rounded-xl border border-zinc-800 flex justify-between items-center"><span class="text-[10px] font-black uppercase text-zinc-600">Amount</span><input type="number" id="amt-${pid}" inputmode="decimal" value="${persistentAmounts[pid]}" oninput="captureAmount('${pid}', this.value)" class="w-24 bg-transparent text-2xl font-black text-brand-500 outline-none text-right" /></div></div>`; }).join(''); 
+            bulkList.innerHTML = selectedForPayment.map(pid => { const p = players.find(x => x.id === pid); const method = paymentMethods[pid] || 'Cash'; const bal = window.getSafeBalance(pid); const feeDue = p.isMember ? memRate : casRate; const totalDue = (bal < 0) ? (Math.abs(bal) + feeDue) : feeDue; if (!persistentAmounts[pid]) persistentAmounts[pid] = totalDue; return `<div class="bg-zinc-900 border border-zinc-800 p-5 rounded-3xl flex flex-col gap-4 animate-in duration-200"><div class="flex justify-between items-start"><div><div class="font-bold text-base text-white">${p.firstName} ${p.lastName.charAt(0)}</div><div class="flex gap-2 mt-1"><span class="text-[9px] font-black uppercase ${bal<0?'text-red-500':'text-zinc-500'}">Debt: $${Math.abs(bal).toFixed(0)}</span><span class="text-[9px] font-black uppercase text-brand-500">+ Match: $${feeDue}</span></div></div><div class="flex bg-zinc-800 p-1 rounded-xl gap-1"><button onclick="setPaymentMethod('${pid}', 'Cash')" class="px-4 py-2 rounded-lg text-sm transition-all ${method==='Cash'?'bg-emerald-600 text-white':'text-zinc-500'}"><i class="fa-solid fa-money-bill-1"></i></button><button onclick="setPaymentMethod('${pid}', 'Card')" class="px-4 py-2 rounded-lg text-sm transition-all ${method==='Card'?'bg-blue-600 text-white':'text-zinc-500'}"><i class="fa-solid fa-credit-card"></i></button></div></div><div class="bg-black/40 px-4 py-3 rounded-xl border border-zinc-800 flex justify-between items-center"><span class="text-[10px] font-black uppercase text-zinc-600">Amount</span><input type="number" id="amt-${pid}" inputmode="decimal" value="${persistentAmounts[pid]}" oninput="captureAmount('${pid}', this.value)" class="w-24 bg-transparent text-2xl font-black text-brand-500 outline-none text-right" /></div></div>`; }).join(''); 
         } else { saveArea.classList.add('hidden'); bulkList.innerHTML = unpaidAvailable.length > 0 ? `<div class="py-10 text-center text-zinc-700 text-[11px] uppercase tracking-widest">Select players above to collect</div>` : `<div class="py-12 text-center text-brand-500/40 text-xs uppercase italic">Squad Payments Complete</div>`; } 
     }
     
@@ -602,12 +659,12 @@
             if (baseAmt <= 0) { alert("Amount must be greater than 0 to charge Card."); return; }
             const p = players.find(x => x.id === pid);
             
-            // Add surcharge
             const surchargeRate = parseFloat(config.CardSurcharge) || 0;
             const totalAmt = baseAmt + (baseAmt * (surchargeRate / 100));
             
-            const posNote = p ? `${p.firstName} ${p.lastName} - vs ${fix.opponent}` : `vs ${fix.opponent}`;
-            // Ledger records base amount
+            const teamName = teams.find(t => t.id === activeTeamId)?.name || "Team";
+            const posNote = p ? `${p.firstName} ${p.lastName.charAt(0)} - ${teamName} Match Fees` : `${teamName} Match Fees`;
+            
             const payload = { action: "saveSessionTake", teamId: activeTeamId, opponent: fix.opponent, matchDate: fix.date, payments: [{ playerId: pid, amount: baseAmt, formattedNote: `Card - ${fix.opponent}` }], umpireFee: false };
             
             localStorage.setItem('fp_draft_state', JSON.stringify({ selected: selectedForPayment, amounts: persistentAmounts, methods: paymentMethods, umpire: umpireFeePaid }));
@@ -645,16 +702,16 @@
         window.renderGamedaySelection(); window.renderPlayersList(); window.renderTeamAudit();
     }
 
-    window.renderPlayersList = function() { const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; let filtered = players.filter(p => { const teamMatch = (currentUser.role === 'admin') ? (p.defaultTeam === activeTeamId) : (p.defaultTeam === currentUser.teamId); return `${p.firstName} ${p.lastName}`.toLowerCase().includes(term) && teamMatch; }); list.innerHTML = filtered.map(p => { const bal = window.getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all shadow-sm"><div class="flex-1"><div class="font-bold text-zinc-100 text-base">${p.firstName} ${p.lastName}</div></div><div class="text-xl font-black ${bal<0?'text-red-500':'text-brand-500'} italic">$${bal.toFixed(2)}</div></div>`; }).join(''); }
+    window.renderPlayersList = function() { const list = document.getElementById('players-list'); const term = document.getElementById('ledger-search')?.value.toLowerCase() || ''; let filtered = players.filter(p => { const teamMatch = (currentUser.role === 'admin') ? (p.defaultTeam === activeTeamId) : (p.defaultTeam === currentUser.teamId); return `${p.firstName} ${p.lastName}`.toLowerCase().includes(term) && teamMatch; }); list.innerHTML = filtered.map(p => { const bal = window.getSafeBalance(p.id); return `<div onclick="showHistory('${p.id}')" class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl flex justify-between items-center mb-1 active:scale-95 transition-all shadow-sm"><div class="flex-1"><div class="font-bold text-zinc-100 text-base">${p.firstName} ${p.lastName.charAt(0)}</div></div><div class="text-xl font-black ${bal<0?'text-red-500':'text-brand-500'} italic">$${bal.toFixed(2)}</div></div>`; }).join(''); }
     
-    window.showHistory = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); const bal = window.getSafeBalance(pid); let history = [...transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date))].reverse(); updateUI('history-name', p.firstName + " " + p.lastName); updateUI('history-balance', "Balance: $" + bal.toFixed(2)); const list = document.getElementById('history-list'); let html = `<button onclick="openTransactionModal('${pid}')" class="w-full bg-brand-600/10 text-brand-500 border border-brand-500/20 font-black uppercase text-[10px] tracking-widest py-3 rounded-xl mb-4 shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-plus mr-1"></i> Add Manual Transaction</button>`; html += history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : (t.type === 'manual_charge' ? 'Charge' : t.type)}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-6 text-center opacity-30 text-xs font-black uppercase">No History</div>`; list.innerHTML = html; document.getElementById('history-modal').classList.remove('hidden'); }
+    window.showHistory = function(pid) { currentEditId = pid; const p = players.find(x => x.id === pid); const bal = window.getSafeBalance(pid); let history = [...transactions.filter(t => String(t.playerId) === String(pid) && window.isWithinSeason(t.date))].reverse(); updateUI('history-name', p.firstName + " " + p.lastName.charAt(0)); updateUI('history-balance', "Balance: $" + bal.toFixed(2)); const list = document.getElementById('history-list'); let html = `<button onclick="openTransactionModal('${pid}')" class="w-full bg-brand-600/10 text-brand-500 border border-brand-500/20 font-black uppercase text-[10px] tracking-widest py-3 rounded-xl mb-4 shadow-sm active:scale-95 transition-all"><i class="fa-solid fa-plus mr-1"></i> Add Manual Transaction</button>`; html += history.length > 0 ? history.map(t => `<div class="bg-zinc-800/40 p-5 rounded-2xl border border-zinc-800 flex justify-between mb-2 shadow-inner"><div><div class="text-[10px] uppercase text-zinc-500 font-bold">${t.type === 'match_fee' ? 'Match Fee' : (t.type === 'manual_charge' ? 'Charge' : t.type)}</div><div class="text-sm font-bold text-zinc-200">${t.note}</div></div><div class="text-base font-black ${parseFloat(t.amount)<0?'text-red-400':'text-brand-400'}">${parseFloat(t.amount)<0?'-':'+'}$${Math.abs(parseFloat(t.amount)).toFixed(2)}</div></div>`).join('') : `<div class="py-6 text-center opacity-30 text-xs font-black uppercase">No History</div>`; list.innerHTML = html; document.getElementById('history-modal').classList.remove('hidden'); }
     window.renderTeamPills = function() { const caps = currentUser?.role === 'captain'; [document.getElementById('team-pills-gameday'), document.getElementById('team-pills-ledger')].forEach(c => { if(!c) return; c.style.display = caps ? 'none' : 'flex'; c.innerHTML = teams.map(t => `<button onclick="activeTeamId='${t.id}'; renderAll();" class="px-6 py-3 rounded-full text-xs font-black uppercase border-2 transition-all ${activeTeamId === t.id ? 'bg-brand-600 border-brand-600 text-white shadow-lg' : 'border-zinc-800 text-zinc-600'}">${t.name}</button>`).join(''); }); }
     window.renderSetupTeams = function() { const list = document.getElementById('setup-team-list'); if(!list) return; list.innerHTML = teams.map(t => `<div class="bg-zinc-900 border border-zinc-800 px-5 py-3 rounded-xl text-[10px] font-black uppercase text-zinc-300 flex items-center gap-3">${t.name}<button onclick="handleDeleteTeam('${t.id}')" class="text-red-900/40 hover:text-red-500 ml-2"><i class="fa-solid fa-xmark"></i></button></div>`).join(''); }
     window.renderSetupFixtures = function() { const list = document.getElementById('setup-fixture-list'); if(!list) return; let html = ""; teams.forEach(team => { const teamF = fixtures.filter(f => f.teamId === team.id && window.isWithinSeason(f.date)); html += `<div class="team-group-header uppercase">${team.name}</div>`; if(teamF.length === 0) html += `<div class="p-4 opacity-20 text-[10px] uppercase font-bold">No matches</div>`; teamF.forEach(f => { const isClosed = transactions.some(t => t.note.includes(f.opponent) && t.type === 'expense' && String(t.teamId) === String(f.teamId)); html += `<div class="bg-zinc-900 p-5 rounded-3xl border border-zinc-800 mb-3 flex justify-between items-center shadow-lg"><div><div class="font-bold text-sm text-white">vs ${f.opponent}</div><div class="text-[10px] text-brand-500 font-black uppercase">${formatAUDate(f.date)}</div></div><div class="flex items-center gap-2"><button onclick="openSquadPicker('${f.id}')" class="px-4 py-2 bg-brand-600/20 text-brand-500 rounded-lg text-[10px] font-black uppercase border border-brand-600/30 shadow-inner">Squad</button>${isClosed ? `<span class="px-4 py-2 bg-zinc-800 text-zinc-500 rounded-lg text-[10px] font-black uppercase border border-zinc-700">Locked ✓</span>` : `<button onclick="handleCloseGame('${f.id}')" class="px-4 py-2 bg-red-950/20 text-red-500 rounded-lg text-[10px] font-black uppercase border border-red-900/20 shadow-md">Close</button>`}<button onclick="openEditFixture('${f.id}')" class="h-10 w-10 bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500"><i class="fa-solid fa-pen text-xs"></i></button></div></div>`; }); }); list.innerHTML = html; }
     window.renderMasterPlayerList = function() { const list = document.getElementById('master-players-list'); if(!list) return; let html = ""; teams.forEach(team => { const teamP = players.filter(p => p.defaultTeam === team.id); if(teamP.length > 0) { html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">${team.name}</div><div class="space-y-2 mt-3">${teamP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; } }); const unassignedP = players.filter(p => !teams.some(t => t.id === p.defaultTeam)); if(unassignedP.length > 0) { html += `<div class="mb-6"><div class="team-group-header uppercase !mt-0">Unassigned / Casuals</div><div class="space-y-2 mt-3">${unassignedP.map(p => `<div class="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex justify-between items-center shadow-sm"><div class="flex items-center gap-4"><span class="text-[10px] font-black px-3 py-1 rounded-md border ${p.isMember ? 'bg-brand-600/20 border-brand-500/30 text-brand-500' : 'bg-zinc-800 border-zinc-700 text-zinc-500'} uppercase">${p.isMember ? 'Mem' : 'Cas'}</span><div class="font-bold text-base text-zinc-100">${p.firstName} ${p.lastName}</div></div><button onclick="openEditFromSetup('${p.id}')" class="h-11 w-11 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-400 active:bg-brand-600 active:text-white transition-all shadow-inner"><i class="fa-solid fa-pen text-sm"></i></button></div>`).join('')}</div></div>`; } list.innerHTML = html; }
     window.populateDropdowns = function() { const teamHtml = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join(''); if(document.getElementById('fixture-team-assign')) document.getElementById('fixture-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; if(document.getElementById('player-team-assign')) document.getElementById('player-team-assign').innerHTML = '<option value="-">Unassigned</option>' + teamHtml; if(document.getElementById('user-team-assign')) document.getElementById('user-team-assign').innerHTML = '<option value="">Select Team</option>' + teamHtml; }
     window.openSquadPicker = function(fid) { currentSquadFixtureId = fid; const f = fixtures.find(x => x.id === fid); updateUI('squad-title', "Squad: " + f.opponent); document.getElementById('squad-search').value = ""; localSquadSelection = fixturesSquad.filter(s => s.fixtureId === fid).map(s => s.playerId); renderSquadPicker(); document.getElementById('squad-modal').classList.remove('hidden'); }
-    window.renderSquadPicker = function() { const term = document.getElementById('squad-search').value.toLowerCase(); const f = fixtures.find(x => x.id === currentSquadFixtureId); const list = document.getElementById('squad-picker-list'); const sorted = [...players].sort((a,b) => (a.defaultTeam === f.teamId ? -1 : 1)); let html = "", rS = false; sorted.forEach(p => { if (!`${p.firstName} ${p.lastName}`.toLowerCase().includes(term)) return; const pri = p.defaultTeam === f.teamId; if (!pri && !rS) { html += `<div class="picker-section-label">Club Members & Casuals</div>`; rS = true; } else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; } const chk = localSquadSelection.includes(p.id); html += `<div onclick="toggleLocalSquad('${p.id}')" class="squad-check p-4 bg-zinc-800/40 rounded-2xl flex justify-between items-center mb-1 ${chk?'selected':''}"><div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName}</div></div><i class="fa-solid ${chk?'fa-check-circle text-white':'fa-circle-plus opacity-20 text-white'} text-lg transition-all"></i></div>`; }); list.innerHTML = html; }
+    window.renderSquadPicker = function() { const term = document.getElementById('squad-search').value.toLowerCase(); const f = fixtures.find(x => x.id === currentSquadFixtureId); const list = document.getElementById('squad-picker-list'); const sorted = [...players].sort((a,b) => (a.defaultTeam === f.teamId ? -1 : 1)); let html = "", rS = false; sorted.forEach(p => { if (!`${p.firstName} ${p.lastName}`.toLowerCase().includes(term)) return; const pri = p.defaultTeam === f.teamId; if (!pri && !rS) { html += `<div class="picker-section-label">Club Members & Casuals</div>`; rS = true; } else if (pri && html === "") { html += `<div class="picker-section-label">Core Team</div>`; } const chk = localSquadSelection.includes(p.id); html += `<div onclick="toggleLocalSquad('${p.id}')" class="squad-check p-4 bg-zinc-800/40 rounded-2xl flex justify-between items-center mb-1 ${chk?'selected':''}"><div><div class="font-bold text-sm text-zinc-100">${p.firstName} ${p.lastName.charAt(0)}</div></div><i class="fa-solid ${chk?'fa-check-circle text-white':'fa-circle-plus opacity-20 text-white'} text-lg transition-all"></i></div>`; }); list.innerHTML = html; }
     window.toggleLocalSquad = function(pid) { if (localSquadSelection.includes(pid)) { localSquadSelection = localSquadSelection.filter(id => id !== pid); } else { localSquadSelection.push(pid); } renderSquadPicker(); }
     window.saveSquad = async function() { window.showToast("Saving", "Updating squad..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "saveFixtureSquad", fixtureId: currentSquadFixtureId, playerIds: localSquadSelection }) }); window.hideModal('squad-modal'); await window.loadData(true); window.showToast("Success", "Squad saved", true); } catch(e) { window.hideToast(); alert("Save failed"); } }
     window.handleConfigUpdate = async function() { const n = document.getElementById('config-season-name').value.trim(); const s = document.getElementById('config-season-start').value; const e = document.getElementById('config-season-end').value; const feeLbl = document.getElementById('config-fee-label').value.trim(); const baseF = document.getElementById('config-base-fee').value; const memF = document.getElementById('config-member-fee').value; const casF = document.getElementById('config-casual-fee').value; const cSurch = document.getElementById('config-card-surcharge').value; const tColor = document.getElementById('config-theme-color').value; const fFam = document.getElementById('config-font-family').value.trim(); const aTheme = document.getElementById('config-app-theme').value; const cName = document.getElementById('config-club-name').value.trim(); const cLogo = document.getElementById('config-club-logo').value.trim(); const sqId = document.getElementById('config-square-app-id').value.trim(); window.showToast("Saving", "Updating config..."); try { await fetch(DATABASE_URL, { method: "POST", body: JSON.stringify({ action: "updateSeason", name: n, start: s, end: e, feeLabel: feeLbl, baseFee: baseF, memberFee: memF, casualFee: casF, cardSurcharge: cSurch, themeColor: tColor, fontFamily: fFam, appTheme: aTheme, clubName: cName, clubLogo: cLogo, squareAppId: sqId }) }); await window.loadData(true); window.showToast("Success", "Configuration updated", true); } catch(e) { window.hideToast(); alert("Update failed"); } }
